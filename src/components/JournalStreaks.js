@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabaseClient'
-import { FiZap, FiTrendingUp, FiCalendar, FiTarget } from 'react-icons/fi'
+import { FiZap, FiCalendar, FiTarget } from 'react-icons/fi'
 
 export default function JournalStreaks({ userId }) {
   const [streakData, setStreakData] = useState({
@@ -8,7 +8,7 @@ export default function JournalStreaks({ userId }) {
     longestStreak: 0,
     totalDays: 0,
     weeklyGoal: 3,
-    thisWeekCount: 0
+    thisWeekCount: 0,
   })
   const [recentDays, setRecentDays] = useState([])
   const [loading, setLoading] = useState(true)
@@ -22,8 +22,8 @@ export default function JournalStreaks({ userId }) {
   const calculateStreaks = async () => {
     try {
       setLoading(true)
-      
-      // Get all journal entries for the user
+
+      // Ambil semua entry user dari tabel journals
       const { data, error } = await supabase
         .from('journals')
         .select('created_at')
@@ -33,50 +33,51 @@ export default function JournalStreaks({ userId }) {
       if (error) throw error
 
       const entries = data || []
-      
-      // Get unique dates
-      const uniqueDates = [...new Set(entries.map(entry => 
-        new Date(entry.created_at).toDateString()
-      ))].sort((a, b) => new Date(b) - new Date(a))
 
-      // Calculate current streak
+      // Ambil tanggal unik tanpa jam
+      const uniqueDates = [
+        ...new Set(
+          entries.map((entry) => new Date(entry.created_at).toDateString())
+        ),
+      ].sort((a, b) => new Date(b) - new Date(a))
+
+      // Hitung current streak
       let currentStreak = 0
       const today = new Date()
       let checkDate = new Date(today)
 
-      // Check if user wrote today or yesterday (to account for timezone differences)
       const todayStr = today.toDateString()
-      const yesterdayStr = new Date(today.getTime() - 24 * 60 * 60 * 1000).toDateString()
-      
+      const yesterdayStr = new Date(today.getTime() - 86400000).toDateString()
+
       if (uniqueDates.includes(todayStr)) {
         currentStreak = 1
         checkDate.setDate(checkDate.getDate() - 1)
       } else if (uniqueDates.includes(yesterdayStr)) {
         currentStreak = 1
-        checkDate = new Date(today.getTime() - 24 * 60 * 60 * 1000)
+        checkDate = new Date(today.getTime() - 86400000)
         checkDate.setDate(checkDate.getDate() - 1)
       } else {
         currentStreak = 0
       }
 
-      // Continue counting backwards for consecutive days
       while (currentStreak > 0 && uniqueDates.includes(checkDate.toDateString())) {
         currentStreak++
         checkDate.setDate(checkDate.getDate() - 1)
       }
 
-      // Calculate longest streak
+      // Hitung longest streak
       let longestStreak = 0
       let tempStreak = 0
       let prevDate = null
 
-      for (const dateStr of uniqueDates.reverse()) {
+      for (const dateStr of [...uniqueDates].reverse()) {
         const currentDate = new Date(dateStr)
-        
-        if (prevDate === null) {
+
+        if (!prevDate) {
           tempStreak = 1
         } else {
-          const dayDiff = Math.floor((currentDate - prevDate) / (1000 * 60 * 60 * 24))
+          const dayDiff =
+            (currentDate - prevDate) / (1000 * 60 * 60 * 24) // Selisih hari
           if (dayDiff === 1) {
             tempStreak++
           } else {
@@ -88,42 +89,43 @@ export default function JournalStreaks({ userId }) {
       }
       longestStreak = Math.max(longestStreak, tempStreak)
 
-      // Calculate this week's entries
+      // Hitung jumlah entry minggu ini
       const startOfWeek = new Date(today)
       startOfWeek.setDate(today.getDate() - today.getDay())
       startOfWeek.setHours(0, 0, 0, 0)
 
-      const thisWeekEntries = entries.filter(entry => 
-        new Date(entry.created_at) >= startOfWeek
+      const thisWeekEntries = entries.filter(
+        (entry) => new Date(entry.created_at) >= startOfWeek
       )
-      const thisWeekUniqueDays = new Set(thisWeekEntries.map(entry => 
-        new Date(entry.created_at).toDateString()
-      )).size
+      const thisWeekUniqueDays = new Set(
+        thisWeekEntries.map((entry) =>
+          new Date(entry.created_at).toDateString()
+        )
+      ).size
 
-      // Generate recent 30 days for visualization
+      // Buat data 30 hari terakhir untuk calendar
       const recent30Days = []
       for (let i = 29; i >= 0; i--) {
         const date = new Date(today)
         date.setDate(date.getDate() - i)
         const dateStr = date.toDateString()
         recent30Days.push({
-          date: date,
+          date,
           hasEntry: uniqueDates.includes(dateStr),
           isToday: i === 0,
-          dayOfWeek: date.getDay()
+          dayOfWeek: date.getDay(),
         })
       }
 
       setStreakData({
-        currentStreak: currentStreak - 1, // Subtract 1 because we started with 1
+        currentStreak,
         longestStreak,
         totalDays: uniqueDates.length,
-        weeklyGoal: 3, // This could be made configurable
-        thisWeekCount: thisWeekUniqueDays
+        weeklyGoal: 3, // Bisa diubah jika ingin
+        thisWeekCount: thisWeekUniqueDays,
       })
 
       setRecentDays(recent30Days)
-
     } catch (error) {
       console.error('Error calculating streaks:', error)
     } finally {
@@ -131,6 +133,7 @@ export default function JournalStreaks({ userId }) {
     }
   }
 
+  // Emoji untuk streak
   const getStreakEmoji = (streak) => {
     if (streak === 0) return '📝'
     if (streak < 3) return '🔥'
@@ -140,9 +143,10 @@ export default function JournalStreaks({ userId }) {
     return '🏆'
   }
 
+  // Pesan motivasi berdasarkan streak
   const getMotivationalMessage = () => {
     const { currentStreak, longestStreak } = streakData
-    
+
     if (currentStreak === 0) {
       return "Ready to start a new streak? Write your first entry today! 💪"
     }
@@ -161,7 +165,10 @@ export default function JournalStreaks({ userId }) {
     return `Incredible dedication! ${currentStreak} days straight! 💎`
   }
 
-  const weeklyProgress = Math.min((streakData.thisWeekCount / streakData.weeklyGoal) * 100, 100)
+  const weeklyProgress = Math.min(
+    (streakData.thisWeekCount / streakData.weeklyGoal) * 100,
+    100
+  )
 
   if (loading) {
     return (
@@ -184,7 +191,6 @@ export default function JournalStreaks({ userId }) {
         Writing Streaks
       </h3>
 
-      {/* Current Streak Display */}
       <div className="text-center mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-100">
         <div className="text-4xl mb-2">{getStreakEmoji(streakData.currentStreak)}</div>
         <div className="text-2xl font-bold text-orange-600 mb-1">
@@ -198,23 +204,17 @@ export default function JournalStreaks({ userId }) {
         </p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="text-xl font-bold text-blue-600 mb-1">
-            {streakData.longestStreak}
-          </div>
+          <div className="text-xl font-bold text-blue-600 mb-1">{streakData.longestStreak}</div>
           <p className="text-xs text-blue-700">Longest Streak</p>
         </div>
         <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
-          <div className="text-xl font-bold text-green-600 mb-1">
-            {streakData.totalDays}
-          </div>
+          <div className="text-xl font-bold text-green-600 mb-1">{streakData.totalDays}</div>
           <p className="text-xs text-green-700">Total Writing Days</p>
         </div>
       </div>
 
-      {/* Weekly Goal Progress */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -226,18 +226,18 @@ export default function JournalStreaks({ userId }) {
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-3">
-          <div 
+          <div
             className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500"
             style={{ width: `${weeklyProgress}%` }}
           ></div>
         </div>
         <p className="text-xs text-gray-500 mt-1">
-          {weeklyProgress >= 100 ? '🎉 Goal achieved this week!' : 
-           `${Math.ceil(streakData.weeklyGoal - streakData.thisWeekCount)} more days to reach your goal`}
+          {weeklyProgress >= 100
+            ? '🎉 Goal achieved this week!'
+            : `${Math.ceil(streakData.weeklyGoal - streakData.thisWeekCount)} more days to reach your goal`}
         </p>
       </div>
 
-      {/* Recent Activity Calendar */}
       <div className="mb-4">
         <p className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
           <FiCalendar size={14} />
@@ -245,27 +245,32 @@ export default function JournalStreaks({ userId }) {
         </p>
         <div className="grid grid-cols-7 gap-1">
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-            <div key={index} className="text-center text-xs text-gray-400 mb-1 font-medium">
+            <div
+              key={index}
+              className="text-center text-xs text-gray-400 mb-1 font-medium"
+            >
               {day}
             </div>
           ))}
-          
-          {/* Add empty cells for proper calendar alignment */}
+
+          {/* Kosongkan slot sebelum hari pertama bulan */}
           {Array.from({ length: recentDays[0]?.dayOfWeek || 0 }, (_, i) => (
             <div key={`empty-${i}`} className="w-4 h-4"></div>
           ))}
-          
+
           {recentDays.map((day, index) => (
             <div
               key={index}
               className={`w-4 h-4 rounded-sm border border-gray-200 transition-all duration-200 ${
-                day.hasEntry 
-                  ? day.isToday 
-                    ? 'bg-gradient-to-br from-orange-400 to-red-500 border-orange-400 shadow-sm' 
+                day.hasEntry
+                  ? day.isToday
+                    ? 'bg-gradient-to-br from-orange-400 to-red-500 border-orange-400 shadow-sm'
                     : 'bg-gradient-to-br from-green-400 to-blue-500 border-green-400'
                   : 'bg-gray-100 hover:bg-gray-200'
               }`}
-              title={`${day.date.toLocaleDateString()} ${day.hasEntry ? '- Journal entry' : '- No entry'}`}
+              title={`${day.date.toLocaleDateString()} ${
+                day.hasEntry ? '- Journal entry' : '- No entry'
+              }`}
             />
           ))}
         </div>
@@ -281,7 +286,6 @@ export default function JournalStreaks({ userId }) {
         </div>
       </div>
 
-      {/* Streak Tips */}
       <div className="pt-4 border-t border-gray-100">
         <p className="text-xs text-gray-500 text-center">
           💡 Tip: Write just a few sentences daily to maintain your streak!
