@@ -4,132 +4,74 @@ import {
   Search, MoreVertical, AlertCircle, CheckCircle2, Circle,
   Target, Zap, Flag, Archive, RotateCcw
 } from 'lucide-react';
+
 import { supabase } from '../utils/supabaseClient'
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '../context/AuthContext';
+
+
+
 
 export default function AdvancedTodos() {
-  const session = useSession();
-  const user = session?.user;
+  const { user } = useAuth()
 
   const [todos, setTodos] = useState([]);
   const [newTask, setNewTask] = useState('');
+  const [newDeadline, setNewDeadline] = useState('');
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
+  const [editDeadline, setEditDeadline] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showCompleted, setShowCompleted] = useState(true);
   const [sortBy, setSortBy] = useState('created_at');
 
-  const fetchTodos = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('todos')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTodos(data || []);
-    } catch (error) {
-      console.error('Error fetching todos:', error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTodos();
-  }, [user]);
-
-  const addTodo = async () => {
-    if (!newTask.trim() || !user) return;
+  const addTodo = () => {
+    if (!newTask.trim()) return;
 
     const newTodo = {
+      id: Date.now(),
       task: newTask,
-      user_id: user.id,
       is_completed: false,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      deadline: newDeadline || null
     };
 
-    try {
-      const { data, error } = await supabase
-        .from('todos')
-        .insert([newTodo])
-        .select();
-
-      if (error) throw error;
-
-      setTodos([...(data || []), ...todos]);
-      setNewTask('');
-    } catch (error) {
-      console.error('Error adding todo:', error.message);
-    }
+    setTodos(prev => [newTodo, ...prev]);
+    setNewTask('');
+    setNewDeadline('');
   };
 
-  const toggleComplete = async (id, isCompleted) => {
-    try {
-      setTodos(todos.map(todo =>
-        todo.id === id ? { ...todo, is_completed: !isCompleted } : todo
-      ));
-
-      const { error } = await supabase
-        .from('todos')
-        .update({ is_completed: !isCompleted })
-        .eq('id', id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error toggling todo:', error.message);
-    }
+  const toggleComplete = (id, isCompleted) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, is_completed: !isCompleted } : todo
+    ));
   };
 
-  const deleteTodo = async (id) => {
+  const deleteTodo = (id) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
-
-    try {
-      setTodos(todos.filter(todo => todo.id !== id));
-
-      const { error } = await supabase
-        .from('todos')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error deleting todo:', error.message);
-    }
+    setTodos(todos.filter(todo => todo.id !== id));
   };
 
   const startEditing = (todo) => {
     setEditingId(todo.id);
     setEditText(todo.task);
+    setEditDeadline(todo.deadline || '');
   };
 
-  const saveEdit = async (id) => {
-    try {
-      const { error } = await supabase
-        .from('todos')
-        .update({ task: editText })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setTodos(todos.map(todo =>
-        todo.id === id ? { ...todo, task: editText } : todo
-      ));
-      setEditingId(null);
-    } catch (error) {
-      console.error('Error editing todo:', error.message);
-    }
+  const saveEdit = (id) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, task: editText, deadline: editDeadline || null } : todo
+    ));
+    setEditingId(null);
+    setEditText('');
+    setEditDeadline('');
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditText('');
+    setEditDeadline('');
   };
 
   const filteredTodos = todos.filter(todo => {
@@ -149,125 +91,132 @@ export default function AdvancedTodos() {
         return a.task.localeCompare(b.task);
       case 'completed':
         return a.is_completed - b.is_completed;
+      case 'deadline':
+        return (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31');
       default:
         return new Date(b.created_at) - new Date(a.created_at);
     }
   });
 
+  const checkDeadlineStatus = (deadline) => {
+    if (!deadline) return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deadlineDate = new Date(deadline);
+    
+    if (deadlineDate < today) {
+      return 'overdue';
+    } else if (deadlineDate.toDateString() === today.toDateString()) {
+      return 'today';
+    }
+    return null;
+  };
+
   const stats = {
     total: todos.length,
     completed: todos.filter(t => t.is_completed).length,
     pending: todos.filter(t => !t.is_completed).length,
+    overdue: todos.filter(t => !t.is_completed && checkDeadlineStatus(t.deadline) === 'overdue').length,
     completionRate: todos.length > 0
       ? Math.round((todos.filter(t => t.is_completed).length / todos.length) * 100)
       : 0
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
-      <style jsx>{`
-        .btn-primary {
-          @apply px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105;
-        }
-        .btn-secondary {
-          @apply px-4 py-2 bg-white/20 backdrop-blur-sm text-gray-700 rounded-lg font-semibold border border-white/30 shadow-lg transition-all duration-300 hover:bg-white/30;
-        }
-        .btn-danger {
-          @apply px-3 py-2 bg-red-500 text-white rounded-lg font-semibold shadow-lg transition-all duration-300 hover:bg-red-600 hover:scale-105;
-        }
-        .btn-icon {
-          @apply p-2 rounded-lg transition-all duration-300 hover:scale-105;
-        }
-        .card-glass {
-          @apply bg-white/70 backdrop-blur-md rounded-xl border border-white/20 shadow-xl;
-        }
-        .input-glass {
-          @apply bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-300;
-        }
-        .text-gradient {
-          @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold;
-        }
-        .hover-lift {
-          @apply transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl;
-        }
-      `}</style>
-
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="card-glass p-6 mb-8 hover-lift">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h1 className="text-gradient text-4xl mb-2">My Todo List</h1>
-              <p className="text-gray-600">Stay organized and productive</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8 ">
+        
+        {/* Header Section */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="text-center lg:text-left">
+              <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                My Todo List
+              </h1>
+              <p className="text-gray-600 text-lg">Stay organized and productive every day</p>
             </div>
             
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-                <div className="text-xs text-gray-500">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-                <div className="text-xs text-gray-500">Completed</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-                <div className="text-xs text-gray-500">Pending</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{stats.completionRate}%</div>
-                <div className="text-xs text-gray-500">Progress</div>
-              </div>
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                { label: 'Total', value: stats.total, color: 'text-blue-600', bg: 'bg-blue-50' },
+                { label: 'Completed', value: stats.completed, color: 'text-green-600', bg: 'bg-green-50' },
+                { label: 'Pending', value: stats.pending, color: 'text-orange-600', bg: 'bg-orange-50' },
+                { label: 'Overdue', value: stats.overdue, color: 'text-red-600', bg: 'bg-red-50' },
+                { label: 'Progress', value: `${stats.completionRate}%`, color: 'text-purple-600', bg: 'bg-purple-50' }
+              ].map((stat, index) => (
+                <div key={index} className={`${stat.bg} rounded-xl p-4 text-center border border-white/30`}>
+                  <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
+                  <div className="text-xs text-gray-600 font-medium">{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Add New Task */}
-        <div className="card-glass p-6 mb-8 hover-lift">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <Plus className="h-5 w-5 mr-2 text-blue-500" />
+        {/* Add New Task Section */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-800">
+            <div className="p-2 bg-blue-100 rounded-lg mr-3">
+              <Plus className="h-5 w-5 text-blue-600" />
+            </div>
             Add New Task
           </h2>
           
-          <div className="flex gap-4">
-            <input
-              type="text"
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addTodo()}
-              placeholder="What needs to be done?"
-              className="input-glass flex-1"
-            />
-            <button
-              onClick={addTodo}
-              className="btn-primary"
-              disabled={!newTask.trim()}
-            >
-              <Plus className="h-4 w-4 mr-2 inline" />
-              Add Task
-            </button>
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="text"
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addTodo()}
+                placeholder="What needs to be done?"
+                className="flex-1 bg-white/70 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+              <button
+                onClick={addTodo}
+                disabled={!newTask.trim()}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Task
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <Calendar className="h-4 w-4 text-gray-600" />
+              </div>
+              <input
+                type="date"
+                value={newDeadline}
+                onChange={(e) => setNewDeadline(e.target.value)}
+                className="bg-white/70 border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+              <span className="text-sm text-gray-500">Optional deadline</span>
+            </div>
           </div>
         </div>
 
-        {/* Filters and Search */}
-        <div className="card-glass p-6 mb-8 hover-lift">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Filters and Search Section */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search tasks..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-glass w-full pl-10"
+                className="w-full bg-white/70 border border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
             </div>
             
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="input-glass"
+              className="bg-white/70 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             >
               <option value="all">All Tasks</option>
               <option value="pending">Pending</option>
@@ -277,16 +226,21 @@ export default function AdvancedTodos() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="input-glass"
+              className="bg-white/70 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             >
               <option value="created_at">Sort by Date</option>
               <option value="alphabetical">Sort A-Z</option>
               <option value="completed">Sort by Status</option>
+              <option value="deadline">Sort by Deadline</option>
             </select>
             
             <button
               onClick={() => setShowCompleted(!showCompleted)}
-              className={`btn-secondary ${showCompleted ? 'bg-blue-100/50' : ''}`}
+              className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                showCompleted 
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                  : 'bg-white/70 text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
             >
               {showCompleted ? 'Hide' : 'Show'} Completed
             </button>
@@ -296,154 +250,130 @@ export default function AdvancedTodos() {
         {/* Tasks List */}
         <div className="space-y-4">
           {loading ? (
-            <div className="card-glass p-8 text-center">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading your tasks...</p>
+              <p className="text-gray-600 text-lg">Loading your tasks...</p>
             </div>
           ) : sortedTodos.length === 0 ? (
-            <div className="card-glass p-8 text-center">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-gradient text-xl mb-2">No tasks found</h3>
-              <p className="text-gray-600">
-                {searchTerm || filterStatus !== 'all'
-                  ? "Try adjusting your filters"
-                  : "Add your first task to get started!"
-                }
-              </p>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center">
+              <div className="text-gray-400 mb-4">
+                <Target className="h-16 w-16 mx-auto" />
+              </div>
+              <p className="text-gray-500 text-lg">No tasks found</p>
+              <p className="text-gray-400">Add a new task to get started!</p>
             </div>
           ) : (
-            sortedTodos.map((todo) => (
-              <div 
-                key={todo.id}
-                className={`card-glass p-6 hover-lift transition-all duration-300 ${
-                  todo.is_completed ? 'opacity-75' : ''
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  {/* Checkbox */}
-                  <button
-                    onClick={() => toggleComplete(todo.id, todo.is_completed)}
-                    className={`btn-icon ${
-                      todo.is_completed 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-gray-100 text-gray-400 hover:bg-green-50 hover:text-green-500'
-                    }`}
-                  >
-                    {todo.is_completed ? (
-                      <CheckCircle2 className="h-5 w-5" />
-                    ) : (
-                      <Circle className="h-5 w-5" />
-                    )}
-                  </button>
+            sortedTodos.map(todo => {
+              const deadlineStatus = checkDeadlineStatus(todo.deadline);
+              
+              return (
+                <div
+                  key={todo.id}
+                  className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${
+                    todo.is_completed ? 'opacity-70' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Checkbox */}
+                    <button
+                      onClick={() => toggleComplete(todo.id, todo.is_completed)}
+                      className="flex-shrink-0 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 mt-1"
+                    >
+                      {todo.is_completed ? (
+                        <CheckCircle2 className="h-6 w-6 text-green-500" />
+                      ) : (
+                        <Circle className="h-6 w-6 text-gray-400 hover:text-blue-500" />
+                      )}
+                    </button>
 
-                  {/* Task Content */}
-                  <div className="flex-1 min-w-0">
-                    {editingId === todo.id ? (
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') saveEdit(todo.id);
-                            if (e.key === 'Escape') cancelEdit();
-                          }}
-                          autoFocus
-                          className="input-glass flex-1 font-medium"
-                        />
-                        <button
-                          onClick={() => saveEdit(todo.id)}
-                          className="btn-icon bg-green-100 text-green-600"
-                        >
-                          <Check className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={cancelEdit}
-                          className="btn-icon bg-gray-100 text-gray-600"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <p 
-                          className={`font-medium text-lg cursor-pointer ${
-                            todo.is_completed 
-                              ? 'line-through text-gray-500' 
-                              : 'text-gray-800'
-                          }`}
-                          onDoubleClick={() => startEditing(todo)}
-                        >
-                          {todo.task}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Created: {new Date(todo.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  {editingId !== todo.id && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => startEditing(todo)}
-                        className="btn-icon bg-blue-100 text-blue-600"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteTodo(todo.id)}
-                        className="btn-icon bg-red-100 text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                    {/* Task Content */}
+                    <div className="flex-1 min-w-0">
+                      {editingId === todo.id ? (
+                        <div className="space-y-4">
+                          <input
+                            type="text"
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveEdit(todo.id);
+                              if (e.key === 'Escape') cancelEdit();
+                            }}
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            autoFocus
+                          />
+                          <div className="flex items-center gap-3">
+                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <input
+                              type="date"
+                              value={editDeadline}
+                              onChange={(e) => setEditDeadline(e.target.value)}
+                              className="bg-white border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className={`text-lg ${todo.is_completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                            {todo.task}
+                          </p>
+                          {todo.deadline && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <Calendar className="h-4 w-4 text-gray-400" />
+                              <span className={`text-sm ${
+                                deadlineStatus === 'overdue' ? 'text-red-600 font-semibold' : 
+                                deadlineStatus === 'today' ? 'text-orange-600 font-semibold' : 'text-gray-500'
+                              }`}>
+                                {new Date(todo.deadline).toLocaleDateString()}
+                                {deadlineStatus === 'overdue' && ' (Overdue!)'}
+                                {deadlineStatus === 'today' && ' (Due Today!)'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    {/* Action Buttons */}
+                    <div className="flex-shrink-0 flex gap-2">
+                      {editingId === todo.id ? (
+                        <>
+                          <button
+                            onClick={() => saveEdit(todo.id)}
+                            className="px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors duration-200 text-sm font-medium"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 text-sm font-medium"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => startEditing(todo)}
+                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                            title="Edit task"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteTodo(todo.id)}
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
+                            title="Delete task"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
-        </div>
-
-        {/* Progress Bar */}
-        {todos.length > 0 && (
-          <div className="card-glass p-6 mt-8 hover-lift">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold text-gray-700">Overall Progress</span>
-              <span className="text-sm text-gray-500">
-                {stats.completed} of {stats.total} tasks completed
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
-                className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${stats.completionRate}%` }}
-              ></div>
-            </div>
-            <div className="text-center mt-2">
-              <span className="text-2xl font-bold text-gradient">
-                {stats.completionRate}%
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Instructions */}
-        <div className="card-glass p-6 mt-8 hover-lift">
-          <h3 className="font-semibold text-gray-700 mb-2">How to use:</h3>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Double-click any task to edit it</li>
-            <li>• Click the circle to mark tasks as complete</li>
-            <li>• Use filters to organize your view</li>
-            <li>• Press Enter to quickly add new tasks</li>
-          </ul>
         </div>
       </div>
     </div>

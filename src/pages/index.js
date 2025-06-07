@@ -12,6 +12,7 @@ import SearchFilter from '../components/SearchFilter'
 import QuickNotes from '../components/QuickNotes'
 import MoodTracker from '../components/MoodTracker'
 import JournalStreaks from '../components/JournalStreaks'
+import TodoProgressAndList from '../components/TodoProgressAndList'
 import EnhancedJournalModal from '../components/EnhancedJournalModal'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -37,6 +38,7 @@ export default function JournalHome() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentJournal, setCurrentJournal] = useState(null)
   const [view, setView] = useState('grid')
+  const [todos, setTodos] = useState([])
   const [sortBy, setSortBy] = useState('newest')
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -259,7 +261,7 @@ export default function JournalHome() {
           <div className="lg:col-span-3">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
                   My Journal Entries
                 </h1>
                 <p className="text-gray-600">
@@ -419,6 +421,7 @@ export default function JournalHome() {
 
           <div className="lg:col-span-1 space-y-6">
             <QuickNotes userId={user.id} />
+            <TodoProgressAndList todos={todos} setTodos={setTodos} />
             
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">

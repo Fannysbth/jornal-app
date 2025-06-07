@@ -121,7 +121,7 @@ export default function JournalStreaks({ userId }) {
         currentStreak,
         longestStreak,
         totalDays: uniqueDates.length,
-        weeklyGoal: 3, // Bisa diubah jika ingin
+        weeklyGoal: 5, 
         thisWeekCount: thisWeekUniqueDays,
       })
 

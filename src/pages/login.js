@@ -30,7 +30,6 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
-        {/* Header dengan animasi */}
         <div className="text-center mb-8 animate-fade-in">
           <div className="mb-6">
             <FiHeart className="mx-auto text-6xl text-gradient-primary animate-bounce-gentle" />

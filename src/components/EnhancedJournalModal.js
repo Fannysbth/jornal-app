@@ -1,14 +1,70 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabaseClient'
-import { FiX, FiSave, FiTag, FiHeart } from 'react-icons/fi'
+import { FiX, FiSave, FiTag, FiHeart, FiPlus, FiSearch } from 'react-icons/fi'
 
-export default function JournalModal({ isOpen, onClose, userId, journal = null }) {
+const moods = [
+  { value: 'happy', label: 'Happy', emoji: '😊' },
+  { value: 'sad', label: 'Sad', emoji: '😢' },
+  { value: 'excited', label: 'Excited', emoji: '🤩' },
+  { value: 'calm', label: 'Calm', emoji: '😌' },
+  { value: 'angry', label: 'Angry', emoji: '😠' },
+  { value: 'grateful', label: 'Grateful', emoji: '🙏' },
+  { value: 'anxious', label: 'Anxious', emoji: '😰' },
+  { value: 'motivated', label: 'Motivated', emoji: '💪' }
+]
+
+function JournalCard({ journal, onEdit, onDelete }) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 truncate">{journal.title}</h3>
+          {journal.is_favorite && (
+            <FiHeart className="text-red-500 ml-2" size={18} />
+          )}
+        </div>
+        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+          {journal.content.substring(0, 150)}{journal.content.length > 150 ? '...' : ''}
+        </p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {/* Render tags as badges */}
+          {journal.tags?.map(tag => (
+            <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+              #{tag}
+            </span>
+          ))}
+        </div>
+        <div className="flex justify-between items-center text-sm text-gray-500">
+          <span>{new Date(journal.created_at).toLocaleDateString()}</span>
+          <span>{journal.reading_time} min read</span>
+        </div>
+      </div>
+      <div className="bg-gray-50 px-6 py-3 flex justify-end gap-2 border-t border-gray-200">
+        <button
+          onClick={onEdit}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+        >
+          Edit
+        </button>
+        <button
+          onClick={onDelete}
+          className="text-red-600 hover:text-red-800 text-sm font-medium"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default function EnhancedJournalModal({ isOpen, onClose, userId, journal = null }) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState([])
   const [tagInput, setTagInput] = useState('')
   const [tagSuggestions, setTagSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [mood, setMood] = useState('')
   const [isFavorite, setIsFavorite] = useState(false)
   const [loading, setLoading] = useState(false)
   const [wordCount, setWordCount] = useState(0)
@@ -20,6 +76,7 @@ export default function JournalModal({ isOpen, onClose, userId, journal = null }
       setContent(journal.content || '')
       setTags(journal.tags || [])
       setIsFavorite(journal.is_favorite || false)
+      setMood(journal.mood || '')
     } else {
       resetForm()
     }
@@ -29,19 +86,26 @@ export default function JournalModal({ isOpen, onClose, userId, journal = null }
     const words = content.trim().split(/\s+/).filter(word => word.length > 0)
     const count = words.length
     setWordCount(count)
-    setReadingTime(Math.ceil(count / 200))
+    setReadingTime(Math.ceil(count / 200)) // asumsi baca 200 kata per menit
   }, [content])
 
+  // Fetch tag suggestions from supabase based on input
   const fetchTagSuggestions = async () => {
-    const { data } = await supabase
+    if (!tagInput) return setTagSuggestions([])
+
+    const { data, error } = await supabase
       .from('tags')
-      .select('*')
+      .select('name')
       .eq('user_id', userId)
       .ilike('name', `%${tagInput}%`)
       .limit(5)
-      
-    if (data) {
-      setTagSuggestions(data.map(item => item.name).filter(tag => !tags.includes(tag)))
+
+    if (error) {
+      console.error('Error fetching tag suggestions:', error)
+      setTagSuggestions([])
+    } else {
+      // Filter out tags already in current tags list
+      setTagSuggestions(data?.map(item => item.name).filter(t => !tags.includes(t)) || [])
     }
   }
 
@@ -51,6 +115,7 @@ export default function JournalModal({ isOpen, onClose, userId, journal = null }
       setShowSuggestions(true)
     } else {
       setShowSuggestions(false)
+      setTagSuggestions([])
     }
   }, [tagInput])
 
@@ -62,6 +127,7 @@ export default function JournalModal({ isOpen, onClose, userId, journal = null }
     setIsFavorite(false)
     setWordCount(0)
     setReadingTime(0)
+    setMood('')
   }
 
   const handleTagAdd = (e) => {
@@ -96,11 +162,11 @@ export default function JournalModal({ isOpen, onClose, userId, journal = null }
       const journalData = {
         title: title.trim(),
         content: content.trim(),
-        tags,
         is_favorite: isFavorite,
         word_count: wordCount,
         reading_time: readingTime,
-        user_id: userId
+        user_id: userId,
+        mood: mood
       }
 
       let journalId = journal?.id
@@ -125,44 +191,64 @@ export default function JournalModal({ isOpen, onClose, userId, journal = null }
         if (data) journalId = data.id
       }
 
-      // Handle tags
+      // Handle tags association
       if (tags.length > 0) {
-        // Clear existing tags first
-        await supabase
+        if (!journalId) throw new Error('journalId is undefined!')
+
+        // Remove old journal_tags
+        const { error: delError } = await supabase
           .from('journal_tags')
           .delete()
           .eq('journal_id', journalId)
 
-        // Check existing tags and create new ones if needed
+        if (delError) throw delError
+
+        // For each tag, ensure tag exists, then link
         for (const tagName of tags) {
-          let { data: existingTag } = await supabase
+          // Check if tag exists
+          const { data: existingTags, error: tagError } = await supabase
             .from('tags')
             .select('id')
             .eq('name', tagName)
             .eq('user_id', userId)
-            .single()
+            .limit(1)
+
+          if (tagError) throw tagError
 
           let tagId
-          if (!existingTag) {
-            // Create new tag
-            const { data: newTag } = await supabase
+          if (!existingTags || existingTags.length === 0) {
+            // Insert new tag
+            const { data: newTags, error: insertTagError } = await supabase
               .from('tags')
               .insert([{ name: tagName, user_id: userId }])
               .select()
               .single()
-            tagId = newTag.id
+
+            if (insertTagError) throw insertTagError
+
+            tagId = newTags.id
           } else {
-            tagId = existingTag.id
+            tagId = existingTags[0].id
           }
 
-          // Link tag to journal
-          await supabase
+          // Insert journal_tag link
+          const { error: journalTagError } = await supabase
             .from('journal_tags')
             .insert([{ journal_id: journalId, tag_id: tagId }])
+
+          if (journalTagError) throw journalTagError
+        }
+      } else {
+        // If no tags, ensure old tags are removed
+        if (journalId) {
+          await supabase
+            .from('journal_tags')
+            .delete()
+            .eq('journal_id', journalId)
         }
       }
 
-      onClose()
+      onClose(true)
       resetForm()
     } catch (error) {
       console.error('Error saving journal:', error)
@@ -175,156 +261,141 @@ export default function JournalModal({ isOpen, onClose, userId, journal = null }
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-fade-in">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {journal ? '✏️ Edit Entry' : '📝 New Journal Entry'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <FiX size={24} />
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-lg max-w-3xl w-full p-6 relative shadow-lg max-h-[90vh] overflow-y-auto"
+      >
+        <button
+          type="button"
+          onClick={() => {
+            resetForm()
+            onClose(false)
+          }}
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+        >
+          <FiX size={24} />
+        </button>
 
-        {/* Content */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="p-6 space-y-6">
-            
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="What's on your mind today?"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                required
-              />
-            </div>
+        <h2 className="text-2xl font-semibold mb-4">{journal ? 'Edit Journal' : 'New Journal'}</h2>
 
-            {/* Content */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Content *
-                </label>
-                <div className="text-sm text-gray-500">
-                  {wordCount} words • {readingTime} min read
-                </div>
-              </div>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Write your thoughts here..."
-                rows="12"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 resize-none"
-                required
-              />
-            </div>
+        <input
+          type="text"
+          placeholder="Title"
+          className="w-full mb-4 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          required
+        />
 
-            {/* Tags */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <FiTag size={16} />
-                Tags
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagAdd}
-                  onFocus={() => tagInput && setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  placeholder="Add tags (press Enter or comma to add)"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                />
-                
-                {showSuggestions && tagSuggestions.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
-                    {tagSuggestions.map(tag => (
-                      <div
-                        key={tag}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        onMouseDown={() => {
-                          setTags([...tags, tag])
-                          setTagInput('')
-                        }}
-                      >
-                        #{tag}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm"
-                    >
-                      #{tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="hover:text-red-500 transition-colors"
-                      >
-                        <FiX size={14} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div className="text-xs text-gray-500 mt-1">
-                {tags.length}/10 tags
-              </div>
-            </div>
+        <textarea
+          placeholder="Write your journal here..."
+          className="w-full mb-4 h-48 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400 resize-none"
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          required
+        />
 
-            {/* Favorite Toggle */}
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isFavorite}
-                  onChange={(e) => setIsFavorite(e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                />
-                <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <FiHeart size={16} className={isFavorite ? 'text-indigo-500' : 'text-gray-400'} />
-                  Mark as favorite
-                </span>
-              </label>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+        {/* Mood selection */}
+        <div className="mb-4 flex flex-wrap gap-2 items-center">
+          <span className="mr-2 font-medium">Mood:</span>
+          {moods.map(m => (
             <button
               type="button"
-              onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+              key={m.value}
+              onClick={() => setMood(m.value === mood ? '' : m.value)}
+              className={`px-3 py-1 rounded-full border ${
+                mood === m.value
+                  ? 'bg-blue-500 text-white border-blue-500'
+                  : 'bg-gray-100 text-gray-700 border-gray-300'
+              } flex items-center gap-1 transition-colors`}
             >
-              Cancel
+              <span>{m.emoji}</span> {m.label}
             </button>
-            <button
-              type="submit"
-              disabled={loading || !title.trim() || !content.trim()}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 transition-colors"
+          ))}
+        </div>
+
+        {/* Favorite toggle */}
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="favorite"
+            checked={isFavorite}
+            onChange={e => setIsFavorite(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <label htmlFor="favorite" className="select-none">Mark as Favorite</label>
+        </div>
+
+        {/* Tags input */}
+        <div className="mb-4 relative">
+          <label htmlFor="tags" className="block font-medium mb-1">
+            Tags (max 10):
+          </label>
+          <input
+            id="tags"
+            type="text"
+            value={tagInput}
+            onChange={e => setTagInput(e.target.value.toLowerCase())}
+            onKeyDown={handleTagAdd}
+            placeholder="Add a tag and press Enter or comma"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
+            autoComplete="off"
+          />
+          {showSuggestions && tagSuggestions.length > 0 && (
+            <ul className="absolute z-10 bg-white border border-gray-300 rounded shadow mt-1 max-h-40 overflow-auto w-full text-sm">
+              {tagSuggestions.map(suggestion => (
+                <li
+                  key={suggestion}
+                  className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                  onClick={() => {
+                    if (tags.length < 10) {
+                      setTags([...tags, suggestion])
+                      setTagInput('')
+                      setShowSuggestions(false)
+                    }
+                  }}
+                >
+                  #{suggestion}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Tags display */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          {tags.map(tag => (
+            <div
+              key={tag}
+              className="flex items-center gap-1 bg-gray-200 rounded-full px-3 py-1 text-sm"
             >
-              <FiSave size={16} />
-              {loading ? 'Saving...' : journal ? 'Update Entry' : 'Save Entry'}
-            </button>
-          </div>
-        </form>
-      </div>
+              <span>#{tag}</span>
+              <button
+                type="button"
+                onClick={() => removeTag(tag)}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <FiX size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Word count & reading time */}
+        <div className="mb-4 text-gray-600 text-sm">
+          Word count: {wordCount} | Estimated reading time: {readingTime} min
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded disabled:opacity-60 disabled:cursor-not-allowed transition"
+        >
+          <FiSave size={18} />
+          {loading ? 'Saving...' : 'Save Journal'}
+        </button>
+      </form>
     </div>
   )
 }

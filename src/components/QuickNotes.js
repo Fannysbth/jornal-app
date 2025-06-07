@@ -153,7 +153,7 @@ export default function QuickNotes({ userId }) {
           <div className="flex gap-2">
             <input
               type="text"
-              value={newNote}
+              value={newNote} 
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Quick note..."
               className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"

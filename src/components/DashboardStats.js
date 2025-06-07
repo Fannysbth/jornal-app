@@ -29,7 +29,7 @@ export default function DashboardStats({ userId }) {
         .from('user_stats')
         .select('*')
         .eq('user_id', userId)
-        .single()
+
 
       // Get this month's entries
       const startOfMonth = new Date()
