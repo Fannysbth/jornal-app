@@ -2,24 +2,365 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-50;
+:root {
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-warm: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-sunset: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  --gradient-ocean: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  --gradient-sky: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+  --gradient-rainbow: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
 }
 
-/* Custom scrollbar */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-blue-400 via-purple-500 to-pink-400;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Background animasi floating */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(255, 204, 112, 0.3) 0%, transparent 50%);
+    animation: floatingBg 20s ease-in-out infinite;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  /* Main container dengan glass effect */
+  .main-container {
+    @apply bg-white/90 backdrop-blur-lg rounded-3xl m-4 md:m-8 p-6 md:p-8 shadow-2xl border border-white/20 relative;
+  }
+
+  .main-container::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-t-3xl;
+  }
+
+  /* Button styles yang cerah */
+  .btn-primary {
+    @apply inline-flex items-center px-6 py-3 rounded-full font-medium text-white shadow-lg transition-all duration-300 relative overflow-hidden;
+    background: var(--gradient-primary);
+  }
+
+  .btn-primary::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-full opacity-0 transition-opacity duration-300;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transform: translateX(-100%);
+  }
+
+  .btn-primary:hover {
+    @apply -translate-y-1 shadow-xl;
+  }
+
+  .btn-primary:hover::before {
+    animation: shimmer 0.6s ease-out;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center px-6 py-3 rounded-full font-medium text-gray-700 shadow-lg transition-all duration-300;
+    background: var(--gradient-sunset);
+  }
+
+  .btn-secondary:hover {
+    @apply -translate-y-1 shadow-xl;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center px-6 py-3 rounded-full font-medium text-white shadow-lg transition-all duration-300;
+    background: var(--gradient-warm);
+  }
+
+  .btn-accent:hover {
+    @apply -translate-y-1 shadow-xl;
+  }
+
+  /* Card styles dengan glass effect */
+  .card-glass {
+    @apply bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 transition-all duration-300 relative overflow-hidden;
+  }
+
+  .card-glass::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-0.5;
+    background: var(--gradient-ocean);
+  }
+
+  .card-glass:hover {
+    @apply -translate-y-2 shadow-xl;
+  }
+
+  /* Form inputs yang cantik */
+  .input-glass {
+    @apply w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white/80 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100;
+  }
+
+  .input-glass:focus {
+    @apply scale-[1.02] bg-white/90;
+  }
+
+  .textarea-glass {
+    @apply input-glass min-h-[120px] resize-none;
+  }
+
+  /* Tag styles yang colorful */
+  .tag-colorful {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium m-1 transition-all duration-300;
+  }
+
+  .tag-blue {
+    @apply tag-colorful bg-blue-100 text-blue-800 hover:bg-blue-200 hover:scale-105;
+  }
+
+  .tag-purple {
+    @apply tag-colorful bg-purple-100 text-purple-800 hover:bg-purple-200 hover:scale-105;
+  }
+
+  .tag-pink {
+    @apply tag-colorful bg-pink-100 text-pink-800 hover:bg-pink-200 hover:scale-105;
+  }
+
+  .tag-green {
+    @apply tag-colorful bg-green-100 text-green-800 hover:bg-green-200 hover:scale-105;
+  }
+
+  .tag-yellow {
+    @apply tag-colorful bg-yellow-100 text-yellow-800 hover:bg-yellow-200 hover:scale-105;
+  }
+
+  .tag-gradient {
+    @apply tag-colorful text-white;
+    background: var(--gradient-sky);
+  }
+
+  /* Navigation dengan glass effect */
+  .nav-glass {
+    @apply bg-white/95 backdrop-blur-lg shadow-lg border-b border-white/20;
+  }
+
+  .nav-link {
+    @apply px-4 py-2 rounded-lg text-gray-700 transition-all duration-300 hover:-translate-y-0.5;
+  }
+
+  .nav-link:hover {
+    background: var(--gradient-sunset);
+  }
+
+  /* Modal dengan glass effect */
+  .modal-glass {
+    @apply bg-white/95 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 relative;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+  }
+
+  .modal-glass::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-1 rounded-t-3xl;
+    background: var(--gradient-warm);
+  }
+
+  /* Loading spinner yang cantik */
+  .spinner-colorful {
+    @apply w-10 h-10 rounded-full animate-spin;
+    border: 4px solid transparent;
+    border-top: 4px solid #667eea;
+    border-right: 4px solid #764ba2;
+    border-bottom: 4px solid #f093fb;
+    border-left: 4px solid #f5576c;
+  }
+
+  /* Utility untuk animasi */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-bounce-gentle {
+    animation: bounceGentle 2s ease-in-out infinite;
+  }
+
+  /* Icon buttons yang cantik */
+  .icon-btn {
+    @apply p-2 rounded-full transition-all duration-300 hover:scale-110;
+  }
+
+  .icon-btn-blue {
+    @apply icon-btn text-blue-600 hover:bg-blue-100;
+  }
+
+  .icon-btn-red {
+    @apply icon-btn text-red-600 hover:bg-red-100;
+  }
+
+  .icon-btn-green {
+    @apply icon-btn text-green-600 hover:bg-green-100;
+  }
+
+  /* Gradient text utility */
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-warm {
+    background: var(--gradient-warm);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-rainbow {
+    background: var(--gradient-rainbow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@layer utilities {
+  /* Custom shadows */
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.15);
+  }
+
+  .shadow-glow-pink {
+    box-shadow: 0 0 20px rgba(240, 147, 251, 0.15);
+  }
+
+  .shadow-glow-warm {
+    box-shadow: 0 0 20px rgba(255, 204, 112, 0.15);
+  }
+
+  /* Glass background utilities */
+  .bg-glass {
+    @apply bg-white/90 backdrop-blur-lg;
+  }
+
+  .bg-glass-dark {
+    @apply bg-gray-900/90 backdrop-blur-lg;
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+
+  .hover-glow {
+    @apply transition-shadow duration-300 hover:shadow-glow;
+  }
+}
+
+/* Animations */
+@keyframes floatingBg {
+  0%, 100% { 
+    opacity: 0.3; 
+    transform: scale(1) rotate(0deg); 
+  }
+  50% { 
+    opacity: 0.5; 
+    transform: scale(1.05) rotate(1deg); 
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(100%); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes bounceGentle {
+  0%, 100% { 
+    transform: translateY(0); 
+  }
+  50% { 
+    transform: translateY(-5px); 
+  }
+}
+
+/* Custom scrollbar yang lebih cantik */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  @apply bg-gray-100 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-full;
+  @apply rounded-full;
+  background: var(--gradient-primary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
+  background: var(--gradient-warm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-container {
+    @apply m-2 p-4;
+  }
+  
+  .modal-glass {
+    @apply p-6;
+  }
 }

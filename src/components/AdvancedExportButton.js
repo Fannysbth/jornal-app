@@ -3,7 +3,7 @@ import { supabase } from '../utils/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { FiDownload, FiFileText, FiFile, FiImage, FiCalendar, FiFilter } from 'react-icons/fi'
 
-export default function ExportButton() {
+export default function AdvancedExportButton() {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
