@@ -34,7 +34,7 @@ export default function SignUp() {
           <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-4">
             <FiUser className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-gradient-primary text-4xl font-bold mb-2">
+          <h1 className="text-gradient-primary text-4xl font-bold mb-2 text-center">
             Create Account
           </h1>
           <p className="text-gray-600">Join us and start your journey</p>
@@ -99,7 +99,7 @@ export default function SignUp() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary hover-glow w-full py-3 text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary hover-glow w-full py-3 text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">

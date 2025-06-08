@@ -28,153 +28,144 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="mb-6">
-            <FiHeart className="mx-auto text-6xl text-gradient-primary animate-bounce-gentle" />
-          </div>
-          <h1 className="text-4xl font-bold text-gradient-rainbow mb-2">
-            Welcome Back! ✨
-          </h1>
-          <p className="text-lg text-gray-600">
-            Sign in to continue your journaling journey
-          </p>
+  <div className="main-container min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-md w-full space-y-8">
+      <div className="text-center">
+        <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-4">
+          <FiHeart className="h-6 w-6 text-white animate-bounce-gentle" />
         </div>
+        <h1 className="text-gradient-primary text-4xl font-bold mb-2">
+          Welcome Back! ✨
+        </h1>
+        <p className="text-gray-600">Sign in to continue your journaling journey</p>
+      </div>
 
-        {/* Form Card */}
-        <div className="card-glass animate-slide-up">
-          {/* Error Alert dengan styling yang lebih baik */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center animate-fade-in">
-              <div className="flex-shrink-0 mr-3">
-                ⚠️
-              </div>
-              <div>
-                <strong>Oops!</strong> {error}
-              </div>
-            </div>
-          )}
+      <div className="card-glass hover-lift p-8 space-y-6 animate-slide-up">
+        {error && (
+          <div className="p-4 rounded-lg bg-red-50 border border-red-200 flex items-center space-x-3">
+            <svg
+              className="h-5 w-5 text-red-400 flex-shrink-0"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-11.707a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Email Input */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 flex items-center">
-                <FiMail className="mr-2 text-blue-500" />
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <FiMail className="inline mr-2" />
                 Email Address
               </label>
-              <div className="relative">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input-glass pl-10"
-                  placeholder="Enter your email address"
-                />
-                <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              </div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-glass w-full"
+                placeholder="Enter your email address"
+              />
             </div>
 
-            {/* Password Input */}
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 flex items-center">
-                <FiLock className="mr-2 text-purple-500" />
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <FiLock className="inline mr-2" />
                 Password
               </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-glass pl-10"
-                  placeholder="Enter your password"
-                />
-                <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full btn-primary hover-lift ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="spinner-colorful mr-3" style={{ width: '20px', height: '20px' }}></div>
-                    Signing you in...
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <FiLogIn className="mr-2" />
-                    Sign In to Your Account
-                  </div>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Divider */}
-          <div className="my-8 relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">or</span>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-glass w-full"
+                placeholder="Enter your password"
+              />
             </div>
           </div>
 
-          {/* Sign Up Link */}
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">
-              New to our journaling community? 🌟
-            </p>
-            <Link href="/signup" className="btn-secondary hover-lift inline-flex items-center">
-              <FiUserPlus className="mr-2" />
-              Create New Account
-            </Link>
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary hover-glow w-full py-3 text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Signing you in...
+                </>
+              ) : (
+                <>
+                  <FiLogIn className="mr-2" />
+                  Sign In 
+                </>
+              )}
+            </button>
           </div>
+        </form>
 
-          {/* Additional Links */}
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center space-y-3">
-            <Link href="/" className="nav-link inline-flex items-center text-gray-500 hover:text-gray-700">
-              <FiHome className="mr-2" />
-              Back to Home
-            </Link>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">or</span>
           </div>
         </div>
 
-        {/* Footer inspirational text */}
-        <div className="mt-8 text-center animate-fade-in">
-          <p className="text-sm text-gray-500 leading-relaxed">
-            "Every login is a new chapter waiting to be written. 
-            Welcome back to your personal sanctuary of thoughts and dreams." 💭
-          </p>
+        <div className="text-center">
+          <Link
+            href="/signup"
+            className="btn-secondary hover-scale inline-flex items-center px-6 py-2 text-sm font-medium"
+          >
+            <FiUserPlus className="mr-2 h-4 w-4" />
+            Create New Account
+          </Link>
         </div>
 
-        {/* Floating decoration elements */}
-        <div className="fixed top-10 left-10 text-2xl animate-bounce-gentle opacity-30" style={{ animationDelay: '0s' }}>
-          ✨
-        </div>
-        <div className="fixed top-20 right-10 text-2xl animate-bounce-gentle opacity-30" style={{ animationDelay: '1s' }}>
-          🌟
-        </div>
-        <div className="fixed bottom-10 left-20 text-2xl animate-bounce-gentle opacity-30" style={{ animationDelay: '2s' }}>
-          💫
-        </div>
-        <div className="fixed bottom-20 right-20 text-2xl animate-bounce-gentle opacity-30" style={{ animationDelay: '0.5s' }}>
-          ⭐
+        <div className="text-center mt-6 text-xs text-gray-500">
+          <Link href="/" className="text-gray-500 hover:text-gray-700 inline-flex items-center">
+            <FiHome className="mr-2 h-4 w-4" />
+            Back to Home
+          </Link>
         </div>
       </div>
     </div>
-  )
+  </div>
+)
+
 }

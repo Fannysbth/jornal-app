@@ -171,126 +171,126 @@ export default function JournalStreaks({ userId }) {
   )
 
   if (loading) {
-    return (
-      <div className="card-glass">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="h-16 bg-gray-200 rounded"></div>
-            <div className="h-16 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="card-glass">
-      <h3 className="text-lg font-semibold text-gradient-primary mb-4 flex items-center gap-2">
-        <FiZap />
-        Writing Streaks
-      </h3>
-
-      <div className="text-center mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-100">
-        <div className="text-4xl mb-2">{getStreakEmoji(streakData.currentStreak)}</div>
-        <div className="text-2xl font-bold text-orange-600 mb-1">
-          {streakData.currentStreak}
+    <div className="card-glass p-6 rounded-lg shadow-md">
+      <div className="animate-pulse space-y-4">
+        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="h-16 bg-gray-200 rounded"></div>
+          <div className="h-16 bg-gray-200 rounded"></div>
         </div>
-        <p className="text-sm text-gray-600 mb-2">
-          {streakData.currentStreak === 1 ? 'Day Streak' : 'Days Streak'}
-        </p>
-        <p className="text-xs text-orange-700 font-medium">
-          {getMotivationalMessage()}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="text-xl font-bold text-blue-600 mb-1">{streakData.longestStreak}</div>
-          <p className="text-xs text-blue-700">Longest Streak</p>
-        </div>
-        <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
-          <div className="text-xl font-bold text-green-600 mb-1">{streakData.totalDays}</div>
-          <p className="text-xs text-green-700">Total Writing Days</p>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <FiTarget size={14} />
-            Weekly Goal
-          </span>
-          <span className="text-sm text-gray-600">
-            {streakData.thisWeekCount}/{streakData.weeklyGoal}
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
-          <div
-            className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500"
-            style={{ width: `${weeklyProgress}%` }}
-          ></div>
-        </div>
-        <p className="text-xs text-gray-500 mt-1">
-          {weeklyProgress >= 100
-            ? '🎉 Goal achieved this week!'
-            : `${Math.ceil(streakData.weeklyGoal - streakData.thisWeekCount)} more days to reach your goal`}
-        </p>
-      </div>
-
-      <div className="mb-4">
-        <p className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-          <FiCalendar size={14} />
-          Last 30 Days
-        </p>
-        <div className="grid grid-cols-7 gap-1">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-            <div
-              key={index}
-              className="text-center text-xs text-gray-400 mb-1 font-medium"
-            >
-              {day}
-            </div>
-          ))}
-
-          {/* Kosongkan slot sebelum hari pertama bulan */}
-          {Array.from({ length: recentDays[0]?.dayOfWeek || 0 }, (_, i) => (
-            <div key={`empty-${i}`} className="w-4 h-4"></div>
-          ))}
-
-          {recentDays.map((day, index) => (
-            <div
-              key={index}
-              className={`w-4 h-4 rounded-sm border border-gray-200 transition-all duration-200 ${
-                day.hasEntry
-                  ? day.isToday
-                    ? 'bg-gradient-to-br from-orange-400 to-red-500 border-orange-400 shadow-sm'
-                    : 'bg-gradient-to-br from-green-400 to-blue-500 border-green-400'
-                  : 'bg-gray-100 hover:bg-gray-200'
-              }`}
-              title={`${day.date.toLocaleDateString()} ${
-                day.hasEntry ? '- Journal entry' : '- No entry'
-              }`}
-            />
-          ))}
-        </div>
-        <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-          <span>Less</span>
-          <div className="flex gap-1 items-center">
-            <div className="w-3 h-3 bg-gray-100 rounded-sm border border-gray-200"></div>
-            <div className="w-3 h-3 bg-green-200 rounded-sm border border-green-300"></div>
-            <div className="w-3 h-3 bg-green-400 rounded-sm border border-green-400"></div>
-            <div className="w-3 h-3 bg-green-600 rounded-sm border border-green-500"></div>
-          </div>
-          <span>More</span>
-        </div>
-      </div>
-
-      <div className="pt-4 border-t border-gray-100">
-        <p className="text-xs text-gray-500 text-center">
-          💡 Tip: Write just a few sentences daily to maintain your streak!
-        </p>
       </div>
     </div>
   )
+}
+
+return (
+  <div className="card-glass p-6 rounded-lg shadow-md">
+    <h3 className="text-lg font-semibold text-gradient-primary mb-4 flex items-center gap-2">
+      <FiZap />
+      Writing Streaks
+    </h3>
+
+    <div className="text-center mb-6 p-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-100">
+      <div className="text-5xl mb-2">{getStreakEmoji(streakData.currentStreak)}</div>
+      <div className="text-3xl font-bold text-orange-600 mb-1">
+        {streakData.currentStreak}
+      </div>
+      <p className="text-sm text-gray-600 mb-2">
+        {streakData.currentStreak === 1 ? 'Day Streak' : 'Days Streak'}
+      </p>
+      <p className="text-xs text-orange-700 font-medium">
+        {getMotivationalMessage()}
+      </p>
+    </div>
+
+    <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+        <div className="text-xl font-bold text-blue-600 mb-1">{streakData.longestStreak}</div>
+        <p className="text-xs text-blue-700">Longest Streak</p>
+      </div>
+      <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
+        <div className="text-xl font-bold text-green-600 mb-1">{streakData.totalDays}</div>
+        <p className="text-xs text-green-700">Total Writing Days</p>
+      </div>
+    </div>
+
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <FiTarget size={14} />
+          Weekly Goal
+        </span>
+        <span className="text-sm text-gray-600">
+          {streakData.thisWeekCount}/{streakData.weeklyGoal}
+        </span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-3">
+        <div
+          className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500"
+          style={{ width: `${weeklyProgress}%` }}
+        />
+      </div>
+      <p className="text-xs text-gray-500 mt-1">
+        {weeklyProgress >= 100
+          ? '🎉 Goal achieved this week!'
+          : `${Math.ceil(streakData.weeklyGoal - streakData.thisWeekCount)} more days to reach your goal`}
+      </p>
+    </div>
+
+    <div className="mb-4">
+      <p className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+        <FiCalendar size={14} />
+        Last 30 Days
+      </p>
+      <div className="grid grid-cols-7 gap-1">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+          <div
+            key={index}
+            className="text-center text-xs text-gray-400 mb-1 font-medium"
+          >
+            {day}
+          </div>
+        ))}
+
+        {/* Empty slots before the first day */}
+        {Array.from({ length: recentDays[0]?.dayOfWeek || 0 }, (_, i) => (
+          <div key={`empty-${i}`} className="w-4 h-4"></div>
+        ))}
+
+        {recentDays.map((day, index) => (
+          <div
+            key={index}
+            className={`w-4 h-4 rounded-sm border border-gray-200 transition-all duration-200 ${
+              day.hasEntry
+                ? day.isToday
+                  ? 'bg-gradient-to-br from-orange-400 to-red-500 border-orange-400 shadow-sm'
+                  : 'bg-gradient-to-br from-green-400 to-blue-500 border-green-400'
+                : 'bg-gray-100 hover:bg-gray-200 cursor-default'
+            }`}
+            title={`${day.date.toLocaleDateString()} ${
+              day.hasEntry ? '- Journal entry' : '- No entry'
+            }`}
+          />
+        ))}
+      </div>
+      <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+        <span>Less</span>
+        <div className="flex gap-1 items-center">
+          <div className="w-3 h-3 bg-gray-100 rounded-sm border border-gray-200"></div>
+          <div className="w-3 h-3 bg-green-200 rounded-sm border border-green-300"></div>
+          <div className="w-3 h-3 bg-green-400 rounded-sm border border-green-400"></div>
+          <div className="w-3 h-3 bg-green-600 rounded-sm border border-green-500"></div>
+        </div>
+        <span>More</span>
+      </div>
+    </div>
+
+    <div className="pt-4 border-t border-gray-100">
+      <p className="text-xs text-gray-500 text-center">
+        💡 Tip: Write just a few sentences daily to maintain your streak!
+      </p>
+    </div>
+  </div>
+)
 }

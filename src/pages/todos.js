@@ -26,32 +26,71 @@ export default function AdvancedTodos() {
   const [showCompleted, setShowCompleted] = useState(true);
   const [sortBy, setSortBy] = useState('created_at');
 
-  const addTodo = () => {
-    if (!newTask.trim()) return;
+  useEffect(() => {
+  if (user) {
+    fetchTodos();
+  }
+}, [user]);
 
-    const newTodo = {
-      id: Date.now(),
-      task: newTask,
-      is_completed: false,
-      created_at: new Date().toISOString(),
-      deadline: newDeadline || null
-    };
+const fetchTodos = async () => {
+  setLoading(true);
+  const { data, error } = await supabase
+    .from('todos')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
 
-    setTodos(prev => [newTodo, ...prev]);
-    setNewTask('');
-    setNewDeadline('');
-  };
+  if (error) {
+    console.error('Error fetching todos:', error.message);
+  } else {
+    setTodos(data);
+  }
+  setLoading(false);
+};
+const addTodo = async () => {
+ if (!newTask.trim()) return alert('Task cannot be empty')
+     const { data, error } = await supabase
+       .from('todos')
+       .insert([{ task: newTask.trim(), deadline: newDeadline || null, is_completed: false }])
+       .select()
+       .single()
+     if (error) return alert('Failed to add task: ' + error.message)
+     setTodos([data, ...todos])
+     setNewTask('')
+     setNewDeadline('')
+     setShowAddForm(false)
+};
 
-  const toggleComplete = (id, isCompleted) => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, is_completed: !isCompleted } : todo
-    ));
-  };
 
-  const deleteTodo = (id) => {
-    if (!window.confirm('Are you sure you want to delete this task?')) return;
-    setTodos(todos.filter(todo => todo.id !== id));
-  };
+  const toggleComplete = async (id, isCompleted) => {
+  const { error } = await supabase
+    .from('todos')
+    .update({ is_completed: !isCompleted })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error toggling complete:', error.message);
+  } else {
+    fetchTodos();
+  }
+};
+
+
+  const deleteTodo = async (id) => {
+  if (!window.confirm('Are you sure you want to delete this task?')) return;
+
+  const { error } = await supabase
+    .from('todos')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting todo:', error.message);
+  } else {
+    setTodos(todos.filter(todo => todo.id !== id))
+  }
+};
+
 
   const startEditing = (todo) => {
     setEditingId(todo.id);
@@ -59,14 +98,21 @@ export default function AdvancedTodos() {
     setEditDeadline(todo.deadline || '');
   };
 
-  const saveEdit = (id) => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, task: editText, deadline: editDeadline || null } : todo
-    ));
-    setEditingId(null);
-    setEditText('');
-    setEditDeadline('');
-  };
+  async function saveEdit(id) {
+      if (!editText.trim()) return alert('Task cannot be empty')
+      const { error } = await supabase
+        .from('todos')
+        .update({ task: editText.trim(), deadline: editDeadline || null })
+        .eq('id', id)
+      if (error) return alert('Failed to update task: ' + error.message)
+      setTodos(todos.map(todo =>
+        todo.id === id ? { ...todo, task: editText.trim(), deadline: editDeadline || null } : todo
+      ))
+      setEditingId(null)
+      setEditText('')
+      setEditDeadline('')
+    }
+
 
   const cancelEdit = () => {
     setEditingId(null);
@@ -177,7 +223,7 @@ export default function AdvancedTodos() {
               <button
                 onClick={addTodo}
                 disabled={!newTask.trim()}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                className="px-6 py-3 btn-primary flex items-center"
               >
                 <Plus className="h-4 w-4" />
                 Add Task
@@ -201,7 +247,7 @@ export default function AdvancedTodos() {
 
         {/* Filters and Search Section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 justify-center text-center">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input

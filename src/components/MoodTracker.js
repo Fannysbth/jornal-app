@@ -13,6 +13,7 @@ const moodEmojis = {
   motivated: { emoji: '💪', label: 'Motivated', color: 'bg-indigo-100 text-indigo-600' }
 }
 
+
 export default function MoodTracker({ userId }) {
   const [moodData, setMoodData] = useState([])
   const [selectedMood, setSelectedMood] = useState(null)

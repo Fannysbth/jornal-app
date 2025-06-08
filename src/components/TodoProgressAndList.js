@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabaseClient'
 import { CheckCircle2, Circle, Edit, Trash2 } from 'lucide-react'
 import { FiPlus } from 'react-icons/fi'
+import { useAuth } from '../context/AuthContext';
 
 export default function TodoProgressAndList() {
+   const { user } = useAuth()
   const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState(null)
@@ -12,6 +14,7 @@ export default function TodoProgressAndList() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTask, setNewTask] = useState('')
   const [newDeadline, setNewDeadline] = useState('')
+  
 
   // Fetch todos dari Supabase saat mount
   useEffect(() => {
@@ -23,6 +26,7 @@ export default function TodoProgressAndList() {
     const { data, error } = await supabase
       .from('todos')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     if (error) {
       alert('Failed to fetch todos: ' + error.message)
@@ -55,7 +59,7 @@ export default function TodoProgressAndList() {
     setTodos(todos.filter(todo => todo.id !== id))
   }
 
-  // Save edit ke Supabase & update state
+
   async function saveEdit(id) {
     if (!editText.trim()) return alert('Task cannot be empty')
     const { error } = await supabase
@@ -138,9 +142,9 @@ export default function TodoProgressAndList() {
           />
           <button
             onClick={addTask}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            className="px-4 py-2  btn-primary flex items-center"
           >
-            <FiPlus size={14} />Add Task
+            <Plus className="h-4 w-4" />Add Task
           </button>
         </div>
       )}

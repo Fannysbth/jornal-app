@@ -346,219 +346,221 @@ export default function ExportButton() {
 
   return (
     <>
-      <button
-        onClick={handleOpen}
-        className="btn-secondary hover-lift"
-      >
-        <FiDownload className="mr-2" />
-        Export
-      </button>
+  <button
+    onClick={handleOpen}
+    className="btn-secondary hover-lift"
+  >
+    <FiDownload className="mr-2" />
+    Export
+  </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gradient-primary">
-                Export Journal
-              </h3>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
+  {isOpen && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-lg border border-white/30">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-semibold text-gradient-primary">
+            Export Journal
+          </h3>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="text-gray-400 hover:text-gray-600 transition-colors text-xl font-bold"
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
+        </div>
 
-            <div className="space-y-6">
-              {/* Format Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Export Format
+        <div className="space-y-6">
+          {/* Format Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Export Format
+            </label>
+            <div className="grid grid-cols-1 gap-2">
+              {formatOptions.map(format => (
+                <label
+                  key={format.value}
+                  className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <input
+                    type="radio"
+                    name="format"
+                    value={format.value}
+                    checked={exportOptions.format === format.value}
+                    onChange={(e) => setExportOptions({ ...exportOptions, format: e.target.value })}
+                    className="mr-3 accent-blue-600"
+                  />
+                  <format.icon className="mr-2 text-gray-500" size={16} />
+                  <div>
+                    <div className="font-medium">{format.label}</div>
+                    <div className="text-sm text-gray-500">{format.description}</div>
+                  </div>
                 </label>
-                <div className="grid grid-cols-1 gap-2">
-                  {formatOptions.map(format => (
-                    <label key={format.value} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+              ))}
+            </div>
+          </div>
+
+          {/* Date Range */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              <FiCalendar className="inline mr-1" />
+              Date Range
+            </label>
+            <select
+              value={exportOptions.dateRange}
+              onChange={(e) => setExportOptions({ ...exportOptions, dateRange: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            >
+              {dateRangeOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            {exportOptions.dateRange === 'custom' && (
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">From</label>
+                  <input
+                    type="date"
+                    value={exportOptions.startDate}
+                    onChange={(e) => setExportOptions({ ...exportOptions, startDate: e.target.value })}
+                    className="w-full p-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">To</label>
+                  <input
+                    type="date"
+                    value={exportOptions.endDate}
+                    onChange={(e) => setExportOptions({ ...exportOptions, endDate: e.target.value })}
+                    className="w-full p-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Filters */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              <FiFilter className="inline mr-1" />
+              Content Filters
+            </label>
+
+            {/* Mood Filter */}
+            {moodOptions.length > 0 && (
+              <div className="mb-3">
+                <label className="block text-xs text-gray-500 mb-1">Mood Filter</label>
+                <select
+                  value={exportOptions.moodFilter}
+                  onChange={(e) => setExportOptions({ ...exportOptions, moodFilter: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+                >
+                  <option value="">All Moods</option>
+                  {moodOptions.map(mood => (
+                    <option key={mood} value={mood}>
+                      {mood.charAt(0).toUpperCase() + mood.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Tag Filter */}
+            {availableTags.length > 0 && (
+              <div className="mb-3">
+                <label className="block text-xs text-gray-500 mb-1">Tag Filter</label>
+                <div className="max-h-32 overflow-y-auto border border-gray-200 rounded p-2 bg-white/70 backdrop-blur-sm">
+                  {availableTags.map(tag => (
+                    <label key={tag.id} className="flex items-center py-1 text-sm cursor-pointer select-none">
                       <input
-                        type="radio"
-                        name="format"
-                        value={format.value}
-                        checked={exportOptions.format === format.value}
-                        onChange={(e) => setExportOptions({...exportOptions, format: e.target.value})}
-                        className="mr-3"
+                        type="checkbox"
+                        checked={exportOptions.selectedTags.includes(tag)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setExportOptions({
+                              ...exportOptions,
+                              selectedTags: [...exportOptions.selectedTags, tag]
+                            })
+                          } else {
+                            setExportOptions({
+                              ...exportOptions,
+                              selectedTags: exportOptions.selectedTags.filter(t => t !== tag)
+                            })
+                          }
+                        }}
+                        className="mr-2 accent-blue-600 cursor-pointer"
                       />
-                      <format.icon className="mr-2 text-gray-500" size={16} />
-                      <div>
-                        <div className="font-medium">{format.label}</div>
-                        <div className="text-sm text-gray-500">{format.description}</div>
-                      </div>
+                      #{tag.name}
                     </label>
                   ))}
                 </div>
               </div>
+            )}
+          </div>
 
-              {/* Date Range */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  <FiCalendar className="inline mr-1" />
-                  Date Range
-                </label>
-                <select
-                  value={exportOptions.dateRange}
-                  onChange={(e) => setExportOptions({...exportOptions, dateRange: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {dateRangeOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-
-                {exportOptions.dateRange === 'custom' && (
-                  <div className="grid grid-cols-2 gap-3 mt-3">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">From</label>
-                      <input
-                        type="date"
-                        value={exportOptions.startDate}
-                        onChange={(e) => setExportOptions({...exportOptions, startDate: e.target.value})}
-                        className="w-full p-2 border border-gray-300 rounded text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">To</label>
-                      <input
-                        type="date"
-                        value={exportOptions.endDate}
-                        onChange={(e) => setExportOptions({...exportOptions, endDate: e.target.value})}
-                        className="w-full p-2 border border-gray-300 rounded text-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Filters */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  <FiFilter className="inline mr-1" />
-                  Content Filters
-                </label>
-                
-                {/* Mood Filter */}
-                {moodOptions.length > 0 && (
-                  <div className="mb-3">
-                    <label className="block text-xs text-gray-500 mb-1">Mood Filter</label>
-                    <select
-                      value={exportOptions.moodFilter}
-                      onChange={(e) => setExportOptions({...exportOptions, moodFilter: e.target.value})}
-                      className="w-full p-2 border border-gray-300 rounded text-sm"
-                    >
-                      <option value="">All Moods</option>
-                      {moodOptions.map(mood => (
-                        <option key={mood} value={mood}>
-                          {mood.charAt(0).toUpperCase() + mood.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Tag Filter */}
-                {availableTags.length > 0 && (
-                  <div className="mb-3">
-                    <label className="block text-xs text-gray-500 mb-1">Tag Filter</label>
-                    <div className="max-h-32 overflow-y-auto border border-gray-200 rounded p-2">
-                      {availableTags.map(tag => (
-                        <label key={tag} className="flex items-center py-1 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={exportOptions.selectedTags.includes(tag)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setExportOptions({
-                                  ...exportOptions,
-                                  selectedTags: [...exportOptions.selectedTags, tag]
-                                })
-                              } else {
-                                setExportOptions({
-                                  ...exportOptions,
-                                  selectedTags: exportOptions.selectedTags.filter(t => t !== tag)
-                                })
-                              }
-                            }}
-                            className="mr-2"
-                          />
-                          #{tag}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Include Options */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Include in Export
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={exportOptions.includeTags}
-                      onChange={(e) => setExportOptions({...exportOptions, includeTags: e.target.checked})}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Tags</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={exportOptions.includeMood}
-                      onChange={(e) => setExportOptions({...exportOptions, includeMood: e.target.checked})}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Mood data</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={exportOptions.includeStats}
-                      onChange={(e) => setExportOptions({...exportOptions, includeStats: e.target.checked})}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Statistics (word count, reading time)</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleExport}
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
-                >
-                  {loading ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  ) : (
-                    <FiDownload className="mr-2" />
-                  )}
-                  {loading ? 'Exporting...' : 'Export'}
-                </button>
-              </div>
+          {/* Include Options */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Include in Export
+            </label>
+            <div className="space-y-2">
+              <label className="flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.includeTags}
+                  onChange={(e) => setExportOptions({ ...exportOptions, includeTags: e.target.checked })}
+                  className="mr-2 accent-blue-600"
+                />
+                <span className="text-sm">Tags</span>
+              </label>
+              <label className="flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.includeMood}
+                  onChange={(e) => setExportOptions({ ...exportOptions, includeMood: e.target.checked })}
+                  className="mr-2 accent-blue-600"
+                />
+                <span className="text-sm">Mood data</span>
+              </label>
+              <label className="flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.includeStats}
+                  onChange={(e) => setExportOptions({ ...exportOptions, includeStats: e.target.checked })}
+                  className="mr-2 accent-blue-600"
+                />
+                <span className="text-sm">Statistics (word count, reading time)</span>
+              </label>
             </div>
           </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={loading}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+            >
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              ) : (
+                <FiDownload className="mr-2" />
+              )}
+              {loading ? 'Exporting...' : 'Export'}
+            </button>
+          </div>
         </div>
-      )}
-    </>
-  )
-}
+      </div>
+    </div>
+  )}
+</>)}

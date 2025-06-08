@@ -13,51 +13,8 @@ const moods = [
   { value: 'motivated', label: 'Motivated', emoji: '💪' }
 ]
 
-function JournalCard({ journal, onEdit, onDelete }) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-semibold text-gray-900 truncate">{journal.title}</h3>
-          {journal.is_favorite && (
-            <FiHeart className="text-red-500 ml-2" size={18} />
-          )}
-        </div>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-          {journal.content.substring(0, 150)}{journal.content.length > 150 ? '...' : ''}
-        </p>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {/* Render tags as badges */}
-          {journal.tags?.map(tag => (
-            <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
-              #{tag}
-            </span>
-          ))}
-        </div>
-        <div className="flex justify-between items-center text-sm text-gray-500">
-          <span>{new Date(journal.created_at).toLocaleDateString()}</span>
-          <span>{journal.reading_time} min read</span>
-        </div>
-      </div>
-      <div className="bg-gray-50 px-6 py-3 flex justify-end gap-2 border-t border-gray-200">
-        <button
-          onClick={onEdit}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-        >
-          Edit
-        </button>
-        <button
-          onClick={onDelete}
-          className="text-red-600 hover:text-red-800 text-sm font-medium"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  )
-}
 
-export default function EnhancedJournalModal({ isOpen, onClose, userId, journal = null }) {
+export default function EnhancedJournalModal({ isOpen, onClose, userId, journal = null, mode = "create" }) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState([])
@@ -69,18 +26,34 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
   const [loading, setLoading] = useState(false)
   const [wordCount, setWordCount] = useState(0)
   const [readingTime, setReadingTime] = useState(0)
+  const [modalMode, setModalMode] = useState("view");
 
+  const readOnly = mode === "view"
   useEffect(() => {
     if (journal) {
       setTitle(journal.title || '')
       setContent(journal.content || '')
-      setTags(journal.tags || [])
+      setTags(journal.tags 
+    ? (typeof journal.tags === 'string' ? JSON.parse(journal.tags) : journal.tags) 
+    : [])
       setIsFavorite(journal.is_favorite || false)
       setMood(journal.mood || '')
     } else {
       resetForm()
     }
   }, [journal])
+
+  useEffect(() => {
+    if (journal && (mode === 'view' || mode === 'edit')) {
+      setTitle(journal.title || '')
+      setContent(journal.content || '')
+      setTags(journal.tags ? (typeof journal.tags === 'string' ? JSON.parse(journal.tags) : journal.tags) : [])
+      setIsFavorite(journal.is_favorite || false)
+      setMood(journal.mood || '')
+    } else if (mode === 'create') {
+      resetForm()
+    }
+  }, [journal, mode])
 
   useEffect(() => {
     const words = content.trim().split(/\s+/).filter(word => word.length > 0)
@@ -261,141 +234,158 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-lg max-w-3xl w-full p-6 relative shadow-lg max-h-[90vh] overflow-y-auto"
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <form
+      onSubmit={handleSubmit}
+      className="modal-glass animate-fade-in overflow-y-auto max-w-lg w-full p-6 relative"
+    >
+      <button
+        type="button"
+        onClick={() => {
+          resetForm()
+          onClose(false)
+        }}
+        className="absolute top-4 right-4 icon-btn icon-btn-red"
       >
-        <button
-          type="button"
-          onClick={() => {
-            resetForm()
-            onClose(false)
-          }}
-          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-        >
-          <FiX size={24} />
-        </button>
+        <FiX size={24} />
+      </button>
 
-        <h2 className="text-2xl font-semibold mb-4">{journal ? 'Edit Journal' : 'New Journal'}</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-gradient-primary">
+        {mode === "view" ? "Detail Journal" : journal ? "Edit Journal" : "New Journal"}
+      </h2>
 
+      <input
+        type="text"
+        placeholder="Title"
+        className="input-glass mb-4"
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        required
+        readOnly={mode === "view"}
+      />
+
+      <textarea
+        placeholder="Write your journal here..."
+        className="textarea-glass mb-4"
+        value={content}
+        onChange={e => setContent(e.target.value)}
+        required
+        readOnly={mode === "view"}
+      />
+
+      {/* Mood selection */}
+      <div className="mb-4 flex flex-wrap gap-2 items-center">
+        <span className="mr-2 font-medium text-gray-700">Mood:</span>
+        {moods.map(m => (
+          <button
+            type="button"
+            key={m.value}
+            onClick={() => mode !== "view" && setMood(m.value === mood ? '' : m.value)}
+            className={`tag-colorful ${
+              mood === m.value
+                ? 'bg-blue-500 text-white hover:scale-105'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+            }`}
+            disabled={mode === "view"}
+          >
+            <span>{m.emoji}</span> {m.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Favorite toggle */}
+      <div className="mb-4 flex items-center gap-2">
         <input
+          type="checkbox"
+          id="favorite"
+          checked={isFavorite}
+          onChange={e => setIsFavorite(e.target.checked)}
+          className="w-4 h-4 accent-pink-500"
+          disabled={mode === "view"}
+        />
+        <label htmlFor="favorite" className="select-none text-gray-700">
+          Mark as Favorite
+        </label>
+      </div>
+
+      {/* Tags input */}
+      <div className="mb-4 relative">
+        <label htmlFor="tags" className="block font-medium mb-1 text-gray-700">
+          Tags (max 10):
+        </label>
+        {mode !== "view" && (
+          <>
+        <input
+          id="tags"
           type="text"
-          placeholder="Title"
-          className="w-full mb-4 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          required
+          value={tagInput}
+          onChange={e => setTagInput(e.target.value.toLowerCase())}
+          onKeyDown={handleTagAdd}
+          placeholder="Add a tag and press Enter or comma"
+          className="input-glass"
+          autoComplete="off"
         />
+        {showSuggestions && tagSuggestions.length > 0 && mode !== "view" && (
+          <ul className="absolute z-10 bg-white border border-gray-300 rounded shadow mt-1 max-h-40 overflow-auto w-full text-sm">
+            {tagSuggestions.map(suggestion => (
+              <li
+                key={suggestion}
+                className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                onClick={() => {
+                  if (tags.length < 10) {
+                    setTags([...tags, suggestion])
+                    setTagInput('')
+                    setShowSuggestions(false)
+                  }
+                }}
+              >
+                #{suggestion}
+              </li>
+            ))}
+          </ul>
+        )}
+        </>
+      )}
+      </div>
 
-        <textarea
-          placeholder="Write your journal here..."
-          className="w-full mb-4 h-48 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400 resize-none"
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          required
-        />
-
-        {/* Mood selection */}
-        <div className="mb-4 flex flex-wrap gap-2 items-center">
-          <span className="mr-2 font-medium">Mood:</span>
-          {moods.map(m => (
-            <button
-              type="button"
-              key={m.value}
-              onClick={() => setMood(m.value === mood ? '' : m.value)}
-              className={`px-3 py-1 rounded-full border ${
-                mood === m.value
-                  ? 'bg-blue-500 text-white border-blue-500'
-                  : 'bg-gray-100 text-gray-700 border-gray-300'
-              } flex items-center gap-1 transition-colors`}
-            >
-              <span>{m.emoji}</span> {m.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Favorite toggle */}
-        <div className="mb-4 flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="favorite"
-            checked={isFavorite}
-            onChange={e => setIsFavorite(e.target.checked)}
-            className="w-4 h-4"
-          />
-          <label htmlFor="favorite" className="select-none">Mark as Favorite</label>
-        </div>
-
-        {/* Tags input */}
-        <div className="mb-4 relative">
-          <label htmlFor="tags" className="block font-medium mb-1">
-            Tags (max 10):
-          </label>
-          <input
-            id="tags"
-            type="text"
-            value={tagInput}
-            onChange={e => setTagInput(e.target.value.toLowerCase())}
-            onKeyDown={handleTagAdd}
-            placeholder="Add a tag and press Enter or comma"
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
-            autoComplete="off"
-          />
-          {showSuggestions && tagSuggestions.length > 0 && (
-            <ul className="absolute z-10 bg-white border border-gray-300 rounded shadow mt-1 max-h-40 overflow-auto w-full text-sm">
-              {tagSuggestions.map(suggestion => (
-                <li
-                  key={suggestion}
-                  className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
-                  onClick={() => {
-                    if (tags.length < 10) {
-                      setTags([...tags, suggestion])
-                      setTagInput('')
-                      setShowSuggestions(false)
-                    }
-                  }}
-                >
-                  #{suggestion}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Tags display */}
-        <div className="mb-4 flex flex-wrap gap-2">
-          {tags.map(tag => (
-            <div
-              key={tag}
-              className="flex items-center gap-1 bg-gray-200 rounded-full px-3 py-1 text-sm"
-            >
-              <span>#{tag}</span>
+      {/* Tags display */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {tags.map(tag => (
+          <div
+            key={tag.id}
+            className="tag-blue flex items-center gap-1"
+          >
+            <span>#{tag.name}</span>
+            {mode !== "view" && (
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
-                className="text-gray-600 hover:text-gray-900"
+                className="icon-btn icon-btn-red p-0"
               >
                 <FiX size={14} />
               </button>
-            </div>
-          ))}
-        </div>
+            )}
+          </div>
+        ))}
+      </div>
 
-        {/* Word count & reading time */}
-        <div className="mb-4 text-gray-600 text-sm">
-          Word count: {wordCount} | Estimated reading time: {readingTime} min
-        </div>
+      {/* Word count & reading time */}
+      <div className="mb-4 text-gray-600 text-sm">
+        Word count: {wordCount} | Estimated reading time: {readingTime} min
+      </div>
 
+      {/* Submit button hanya tampil kalau mode bukan view */}
+      {mode !== "view" && (
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded disabled:opacity-60 disabled:cursor-not-allowed transition"
+          className="btn-primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <FiSave size={18} />
           {loading ? 'Saving...' : 'Save Journal'}
         </button>
-      </form>
-    </div>
-  )
+      )}
+    </form>
+  </div>
+)
 }

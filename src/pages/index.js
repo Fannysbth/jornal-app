@@ -4,33 +4,33 @@ import { useAuth } from '../context/AuthContext'
 import Link from 'next/link'
 import {
   FiHome, FiEdit, FiTrash2, FiPlus, FiHeart, FiStar, FiBookmark, FiClock,
-  FiTrendingUp, FiGrid, FiList, FiFilter, FiSearch
+  FiTrendingUp, FiGrid, FiList, FiFilter, FiSearch, FiEye
 } from 'react-icons/fi'
 import ExportButton from '../components/ExportButton'
 import DashboardStats from '../components/DashboardStats'
-import SearchFilter from '../components/SearchFilter'
 import QuickNotes from '../components/QuickNotes'
 import MoodTracker from '../components/MoodTracker'
 import JournalStreaks from '../components/JournalStreaks'
 import TodoProgressAndList from '../components/TodoProgressAndList'
 import EnhancedJournalModal from '../components/EnhancedJournalModal'
 import LoadingSpinner from '../components/LoadingSpinner'
+import Image from 'next/image'
 
-const moodEmojis = {
-  happy: '😊',
-  sad: '😢',
-  excited: '🤩',
-  calm: '😌',
-  angry: '😠',
-  grateful: '🙏',
-  anxious: '😰',
-  motivated: '💪'
-}
 
 const tagColors = ['bg-blue-100', 'bg-green-100', 'bg-yellow-100', 'bg-pink-100', 'bg-purple-100']
-
+const moodEmojis = {
+  happy: { emoji: '😊', label: 'Happy', color: 'bg-yellow-100 text-yellow-600' },
+  sad: { emoji: '😢', label: 'Sad', color: 'bg-blue-100 text-blue-600' },
+  excited: { emoji: '🤩', label: 'Excited', color: 'bg-orange-100 text-orange-600' },
+  calm: { emoji: '😌', label: 'Calm', color: 'bg-green-100 text-green-600' },
+  angry: { emoji: '😠', label: 'Angry', color: 'bg-red-100 text-red-600' },
+  grateful: { emoji: '🙏', label: 'Grateful', color: 'bg-purple-100 text-purple-600' },
+  anxious: { emoji: '😰', label: 'Anxious', color: 'bg-gray-100 text-gray-600' },
+  motivated: { emoji: '💪', label: 'Motivated', color: 'bg-indigo-100 text-indigo-600' }
+}
 export default function JournalHome() {
   const { user } = useAuth()
+  const [selectedJournal, setSelectedJournal] = useState(null);
   const [journals, setJournals] = useState([])
   const [filteredJournals, setFilteredJournals] = useState([])
   const [allTags, setAllTags] = useState([])
@@ -38,8 +38,13 @@ export default function JournalHome() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentJournal, setCurrentJournal] = useState(null)
   const [view, setView] = useState('grid')
+  const [modalMode, setModalMode] = useState("view");
   const [todos, setTodos] = useState([])
   const [sortBy, setSortBy] = useState('newest')
+  const [mode, setMode] = useState('create') 
+  
+
+
   const [filters, setFilters] = useState({
     searchTerm: '',
     selectedTags: [],
@@ -48,7 +53,6 @@ export default function JournalHome() {
     moodFilter: ''
   })
 
-  // Fetch journals with memoization
   const fetchJournals = useCallback(async () => {
     if (!user) return
     
@@ -80,7 +84,6 @@ export default function JournalHome() {
 
       const processedData = data?.map(journal => ({
         ...journal,
-        tags: journal.tags || [],
         word_count: journal.word_count || (journal.content ? journal.content.trim().split(/\s+/).length : 0),
         reading_time: journal.reading_time || (journal.content ? Math.ceil(journal.content.trim().split(/\s+/).length / 200) : 1)
       })) || []
@@ -95,7 +98,6 @@ export default function JournalHome() {
     }
   }, [user, sortBy])
 
-  // Extract unique tags
   const extractUniqueTags = (journalData) => {
     const tags = new Set()
     journalData.forEach(journal => {
@@ -148,12 +150,16 @@ export default function JournalHome() {
     setFilteredJournals(filtered)
   }, [journals, filters])
 
-  // Handle filter changes
+  const openDetailModal = (journal) => {
+  setCurrentJournal(journal)
+  setMode('view')
+  setIsModalOpen(true)
+};
+
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }))
   }, [])
 
-  // Memoized statistics
   const stats = useMemo(() => {
     const totalWords = journals.reduce((total, journal) => total + (journal.word_count || 0), 0)
     const favoriteCount = journals.filter(journal => journal.is_favorite).length
@@ -169,7 +175,6 @@ export default function JournalHome() {
     applyFilters()
   }, [applyFilters, journals])
 
-  // Journal operations
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this journal entry?')) return
     try {
@@ -184,6 +189,7 @@ export default function JournalHome() {
   const handleEdit = (journal) => {
     setCurrentJournal(journal)
     setIsModalOpen(true)
+    setMode('edit')
   }
 
   const toggleFavorite = async (journal) => {
@@ -217,10 +223,11 @@ export default function JournalHome() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-4">
         <div className="text-center py-16 px-4 max-w-md mx-auto">
           <div className="mb-8">
-            <FiHeart className="mx-auto text-6xl text-pink-500 mb-4" />
+            <Image src="/logo.png" alt="MyJournal Logo" width={200} height={200} className="rounded-full mx-auto mb-4" />
+            {/* <FiHeart className="mx-auto text-6xl text-pink-500 mb-4" /> */}
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-6">
             Welcome to MyJournal
@@ -246,6 +253,9 @@ export default function JournalHome() {
       </div>
     )
   }
+
+  
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -308,7 +318,7 @@ export default function JournalHome() {
                     <option value="">All Moods</option>
                     {Object.entries(moodEmojis).map(([value, emoji]) => (
                       <option key={value} value={value}>
-                        {emoji} {value.charAt(0).toUpperCase() + value.slice(1)}
+                        {moodEmojis.emoji} {moodEmojis.label}
                       </option>
                     ))}
                   </select>
@@ -397,6 +407,7 @@ export default function JournalHome() {
                     key={journal.id}
                     journal={journal}
                     onEdit={handleEdit}
+                    onView={openDetailModal} 
                     onDelete={handleDelete}
                     onToggleFavorite={toggleFavorite}
                     getTagColor={getTagColor}
@@ -412,6 +423,7 @@ export default function JournalHome() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onToggleFavorite={toggleFavorite}
+                    onView={openDetailModal}
                     getTagColor={getTagColor}
                   />
                 ))}
@@ -457,11 +469,11 @@ export default function JournalHome() {
                 <div className="flex flex-wrap gap-2">
                   {allTags.map((tag, index) => (
                     <button
-                      key={tag}
+                      key={tag.id}
                       onClick={() => handleFilterChange({ selectedTags: [tag] })}
                       className={`${getTagColor(index)} px-3 py-1 rounded-full text-xs hover:opacity-80`}
                     >
-                      #{tag}
+                      #{tag.name}
                     </button>
                   ))}
                 </div>
@@ -475,6 +487,7 @@ export default function JournalHome() {
           onClose={handleModalClose}
           userId={user.id}
           journal={currentJournal}
+          mode={mode}
         />
 
         <button
@@ -489,26 +502,26 @@ export default function JournalHome() {
   )
 }
 
-// Journal Card Component
-function JournalCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor }) {
+function JournalCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor, onView, readOnly = false }) {
+  console.log('Journal:', journal);
+  console.log('Journal content:', journal.content);
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow h-full flex flex-col">
+    <div className="card-glass hover-lift p-6 h-full flex flex-col">
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="text-lg font-semibold text-gray-800 line-clamp-2">
+            <h2 className="text-lg font-semibold text-gradient-primary line-clamp-2">
               {journal.title}
             </h2>
             {journal.mood && (
               <span className="text-xl" title={journal.mood}>
-                {moodEmojis[journal.mood]}
+                <span>{moodEmojis[journal.mood]?.emoji}</span>
               </span>
             )}
           </div>
           <div className="flex items-center text-xs text-gray-500 gap-3 flex-wrap">
-            <span>
-              {new Date(journal.created_at).toLocaleDateString()}
-            </span>
+            <span>{new Date(journal.created_at).toLocaleDateString()}</span>
             {journal.word_count > 0 && (
               <span className="flex items-center gap-1">
                 <FiEdit size={12} />
@@ -517,8 +530,8 @@ function JournalCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor 
             )}
           </div>
         </div>
-        
-        <div className="flex gap-1">
+
+        {!readOnly && (
           <button
             onClick={() => onToggleFavorite(journal)}
             className={`p-1 rounded-full ${journal.is_favorite ? 'text-pink-500' : 'text-gray-400'}`}
@@ -526,74 +539,81 @@ function JournalCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor 
           >
             <FiHeart size={16} className={journal.is_favorite ? 'fill-current' : ''} />
           </button>
-        </div>
+        )}
       </div>
-      
+
       <div className="prose max-w-none mb-4 flex-1">
         <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line line-clamp-3">
           {journal.content}
         </p>
       </div>
-      
+
       <div className="mt-auto pt-4 border-t border-gray-100">
         <div className="flex justify-between items-center">
           {journal.tags?.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {journal.tags.map((tag, index) => (
                 <span
-                  key={tag}
-                  className={`${getTagColor(index)} px-2 py-1 rounded-full text-xs`}
-                >
-                  #{tag}
-                </span>
+                  key={tag.id|| index}
+                  className={`tag-blue ${getTagColor(index)} px-2 py-1 rounded-full text-xs`}
+                >#{tag.name}
+                </span> 
               ))}
             </div>
           ) : (
             <div className="text-xs text-gray-400">No tags</div>
           )}
-          
-          <div className="flex gap-1">
-            <button
-              onClick={() => onEdit(journal)}
-              className="p-1 text-gray-500 hover:text-blue-600"
-              aria-label="Edit entry"
-            >
-              <FiEdit size={16} />
-            </button>
-            <button
-              onClick={() => onDelete(journal.id)}
-              className="p-1 text-gray-500 hover:text-red-600"
-              aria-label="Delete entry"
-            >
-              <FiTrash2 size={16} />
-            </button>
-          </div>
+
+          {!readOnly && (
+            <div className="flex gap-1">
+              <button
+                onClick={() => onView(journal)}
+                className="btn-neutral hover-scale p-1 text-gray-500"
+                aria-label="View entry"
+              >
+                <FiEye size={16} />
+              </button>
+              <button
+                onClick={() => onEdit(journal)}
+                className="btn-secondary hover-scale p-1 text-gray-500"
+                aria-label="Edit entry"
+              >
+                <FiEdit size={16} />
+              </button>
+              <button
+                onClick={() => onDelete(journal.id)}
+                className="btn-accent hover-glow p-1 text-gray-500"
+                aria-label="Delete entry"
+              >
+                <FiTrash2 size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-// Journal List Card Component
-function JournalListCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor }) {
+
+
+function JournalListCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor, onView, readOnly = false }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+    <div className="card-glass hover-lift p-6">
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-lg font-semibold text-gray-800">
+            <h2 className="text-lg font-semibold text-gradient-primary">
               {journal.title}
             </h2>
             {journal.mood && (
               <span className="text-xl" title={journal.mood}>
-                {moodEmojis[journal.mood]}
+                <span>{moodEmojis[journal.mood]?.emoji}</span>
               </span>
             )}
           </div>
           <div className="flex items-center text-xs text-gray-500 gap-3 mb-2">
-            <span>
-              {new Date(journal.created_at).toLocaleDateString()}
-            </span>
+            <span>{new Date(journal.created_at).toLocaleDateString()}</span>
             {journal.word_count > 0 && (
               <span className="flex items-center gap-1">
                 <FiEdit size={12} />
@@ -602,47 +622,60 @@ function JournalListCard({ journal, onEdit, onDelete, onToggleFavorite, getTagCo
             )}
           </div>
         </div>
-        
-        <div className="flex gap-2">
-          <button
-            onClick={() => onToggleFavorite(journal)}
-            className={`p-1 rounded-full ${journal.is_favorite ? 'text-pink-500' : 'text-gray-400'}`}
-          >
-            <FiHeart size={16} className={journal.is_favorite ? 'fill-current' : ''} />
-          </button>
-          <button
-            onClick={() => onEdit(journal)}
-            className="p-1 text-gray-500 hover:text-blue-600"
-          >
-            <FiEdit size={16} />
-          </button>
-          <button
-            onClick={() => onDelete(journal.id)}
-            className="p-1 text-gray-500 hover:text-red-600"
-          >
-            <FiTrash2 size={16} />
-          </button>
-        </div>
+
+        {!readOnly && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => onToggleFavorite(journal)}
+              className={`p-1 rounded-full ${journal.is_favorite ? 'text-pink-500' : 'text-gray-400'}`}
+              aria-label={journal.is_favorite ? 'Unfavorite' : 'Favorite'}
+            >
+              <FiHeart size={16} className={journal.is_favorite ? 'fill-current' : ''} />
+            </button>
+            <button
+              onClick={() => onView(journal)}
+              className="btn-neutral hover-scale p-1 text-gray-500"
+              aria-label="View entry"
+            >
+              <FiEye size={16} />
+            </button>
+            <button
+              onClick={() => onEdit(journal)}
+              className="btn-secondary hover-scale p-1 text-gray-500"
+              aria-label="Edit entry"
+            >
+              <FiEdit size={16} />
+            </button>
+            <button
+              onClick={() => onDelete(journal.id)}
+              className="btn-accent hover-glow p-1 text-gray-500"
+              aria-label="Delete entry"
+            >
+              <FiTrash2 size={16} />
+            </button>
+          </div>
+        )}
       </div>
-      
+
       <div className="prose max-w-none mb-3">
         <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line line-clamp-2">
           {journal.content}
         </p>
       </div>
-      
+
       {journal.tags?.length > 0 && (
         <div className="flex flex-wrap gap-1 pt-3 border-t border-gray-100">
           {journal.tags.map((tag, index) => (
             <span
-              key={tag}
-              className={`${getTagColor(index)} px-2 py-1 rounded-full text-xs`}
+              key={tag.id|| index}
+              className={`tag-blue ${getTagColor(index)} px-2 py-1 rounded-full text-xs`}
             >
-              #{tag}
+              #{tag.name}
             </span>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }
+
