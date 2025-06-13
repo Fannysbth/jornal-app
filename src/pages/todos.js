@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function AdvancedTodos() {
   const { user } = useAuth()
-
+  const [showAddForm, setShowAddForm] = useState(false);
   const [todos, setTodos] = useState([]);
   const [newTask, setNewTask] = useState('');
   const [newDeadline, setNewDeadline] = useState('');
@@ -51,7 +51,7 @@ const addTodo = async () => {
  if (!newTask.trim()) return alert('Task cannot be empty')
      const { data, error } = await supabase
        .from('todos')
-       .insert([{ task: newTask.trim(), deadline: newDeadline || null, is_completed: false }])
+       .insert([{ task: newTask.trim(), deadline: newDeadline || null, is_completed: false, user_id: user.id  } ])
        .select()
        .single()
      if (error) return alert('Failed to add task: ' + error.message)

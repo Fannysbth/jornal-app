@@ -29,19 +29,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
   const [modalMode, setModalMode] = useState("view");
 
   const readOnly = mode === "view"
-  useEffect(() => {
-    if (journal) {
-      setTitle(journal.title || '')
-      setContent(journal.content || '')
-      setTags(journal.tags 
-    ? (typeof journal.tags === 'string' ? JSON.parse(journal.tags) : journal.tags) 
-    : [])
-      setIsFavorite(journal.is_favorite || false)
-      setMood(journal.mood || '')
-    } else {
-      resetForm()
-    }
-  }, [journal])
 
   useEffect(() => {
     if (journal && (mode === 'view' || mode === 'edit')) {
@@ -62,7 +49,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
     setReadingTime(Math.ceil(count / 200)) // asumsi baca 200 kata per menit
   }, [content])
 
-  // Fetch tag suggestions from supabase based on input
   const fetchTagSuggestions = async () => {
     if (!tagInput) return setTagSuggestions([])
 
@@ -77,8 +63,7 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
       console.error('Error fetching tag suggestions:', error)
       setTagSuggestions([])
     } else {
-      // Filter out tags already in current tags list
-      setTagSuggestions(data?.map(item => item.name).filter(t => !tags.includes(t)) || [])
+      setTagSuggestions(data?.map(item => item.name).filter(t => !tags.some(tag => tag.name === t)) || [])
     }
   }
 
@@ -107,9 +92,10 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
     if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
       e.preventDefault()
       const newTag = tagInput.trim().toLowerCase()
-      if (newTag && !tags.includes(newTag)) {
+      const alreadyExists = tags.some(tag => tag.name === newTag)
+      if (newTag && !alreadyExists) {
         if (tags.length < 10) {
-          setTags([...tags, newTag])
+          setTags([...tags, { name: newTag } ])
           setTagInput('')
         } else {
           alert('Maximum 10 tags allowed')
@@ -119,7 +105,7 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
   }
 
   const removeTag = (tagToRemove) => {
-    setTags(tags.filter(tag => tag !== tagToRemove))
+    setTags(tags.filter(tag => tag.name !== tagToRemove.name))
   }
 
   const handleSubmit = async (e) => {
@@ -177,7 +163,8 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
         if (delError) throw delError
 
         // For each tag, ensure tag exists, then link
-        for (const tagName of tags) {
+        for (const tagObj of tags) {
+          const tagName = tagObj.name
           // Check if tag exists
           const { data: existingTags, error: tagError } = await supabase
             .from('tags')
@@ -190,7 +177,11 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
 
           let tagId
           if (!existingTags || existingTags.length === 0) {
-            // Insert new tag
+            
+            if (tagName.length > 50) {
+             console.warn(`Tag "${tagName}" exceeds 50 characters and will be skipped.`)
+             continue 
+          }
             const { data: newTags, error: insertTagError } = await supabase
               .from('tags')
               .insert([{ name: tagName, user_id: userId }])
@@ -332,7 +323,7 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
                 key={suggestion}
                 className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
                 onClick={() => {
-                  if (tags.length < 10) {
+                  if (tags.length < 10 && !tags.some(tag => tag.name === suggestion)) {
                     setTags([...tags, suggestion])
                     setTagInput('')
                     setShowSuggestions(false)
@@ -349,25 +340,25 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
       </div>
 
       {/* Tags display */}
-      <div className="mb-4 flex flex-wrap gap-2">
-        {tags.map(tag => (
-          <div
-            key={tag.id}
-            className="tag-blue flex items-center gap-1"
-          >
-            <span>#{tag.name}</span>
-            {mode !== "view" && (
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                className="icon-btn icon-btn-red p-0"
-              >
-                <FiX size={14} />
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {tags.map(tag => (
+            <div
+              key={tag.id}
+              className="tag-blue flex items-center gap-1"
+            >
+              <span>#{tag.name}</span>
+              {mode !== "view" && (
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className="icon-btn icon-btn-red p-0"
+                >
+                  <FiX size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
 
       {/* Word count & reading time */}
       <div className="mb-4 text-gray-600 text-sm">

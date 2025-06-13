@@ -155,7 +155,7 @@ export default function JournalHome() {
   setMode('view')
   setIsModalOpen(true)
 };
-
+ 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }))
   }, [])
@@ -255,8 +255,6 @@ export default function JournalHome() {
   }
 
   
-
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -295,86 +293,6 @@ export default function JournalHome() {
               <JournalStreaks userId={user.id} />
             </div>
 
-            <div className="mb-6">
-              <div className="bg-white rounded-lg shadow-sm p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <FiSearch className="text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search journals..."
-                    className="flex-1 outline-none"
-                    value={filters.searchTerm}
-                    onChange={(e) => handleFilterChange({ searchTerm: e.target.value })}
-                  />
-                  <FiFilter className="text-gray-400" />
-                </div>
-                
-                <div className="flex flex-wrap gap-3">
-                  <select
-                    value={filters.moodFilter}
-                    onChange={(e) => handleFilterChange({ moodFilter: e.target.value })}
-                    className="text-sm border rounded-lg px-3 py-2"
-                  >
-                    <option value="">All Moods</option>
-                    {Object.entries(moodEmojis).map(([value, emoji]) => (
-                      <option key={value} value={value}>
-                        {moodEmojis.emoji} {moodEmojis.label}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={filters.showFavoritesOnly}
-                      onChange={(e) => handleFilterChange({ showFavoritesOnly: e.target.checked })}
-                      className="rounded text-pink-500"
-                    />
-                    Favorites Only
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-              <div className="flex items-center gap-4">
-                <div className="text-sm text-gray-600">
-                  Showing {filteredJournals.length} of {journals.length} entries
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="text-sm border rounded-lg px-3 py-2"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="alphabetical">A-Z</option>
-                  <option value="favorites">Favorites First</option>
-                  <option value="word_count">Most Words</option>
-                </select>
-
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                  <button
-                    onClick={() => setView('grid')}
-                    className={`p-2 rounded-md ${view === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'}`}
-                    title="Grid View"
-                  >
-                    <FiGrid size={16} />
-                  </button>
-                  <button
-                    onClick={() => setView('list')}
-                    className={`p-2 rounded-md ${view === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'}`}
-                    title="List View"
-                  >
-                    <FiList size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {loading ? (
               <LoadingSpinner />
             ) : filteredJournals.length === 0 ? (
@@ -400,7 +318,7 @@ export default function JournalHome() {
                   </button>
                 )}
               </div>
-            ) : view === 'grid' ? (
+            ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredJournals.map((journal) => (
                   <JournalCard 
@@ -413,22 +331,7 @@ export default function JournalHome() {
                     getTagColor={getTagColor}
                   />
                 ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredJournals.map((journal) => (
-                  <JournalListCard
-                    key={journal.id}
-                    journal={journal}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onToggleFavorite={toggleFavorite}
-                    onView={openDetailModal}
-                    getTagColor={getTagColor}
-                  />
-                ))}
-              </div>
-            )}
+              </div>)}
           </div>
 
           <div className="lg:col-span-1 space-y-6">
@@ -467,15 +370,17 @@ export default function JournalHome() {
                   Your Tags
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {allTags.map((tag, index) => (
+                  {allTags.map((tagRaw, index) => {
+                  const tag = typeof tagRaw === 'string' ? JSON.parse(tagRaw) : tagRaw;
+                  return(
                     <button
-                      key={tag.id}
+                      key={tag.id || tag.name || index}
                       onClick={() => handleFilterChange({ selectedTags: [tag] })}
                       className={`${getTagColor(index)} px-3 py-1 rounded-full text-xs hover:opacity-80`}
                     >
                       #{tag.name}
                     </button>
-                  ))}
+                  )})}
                 </div>
               </div>
             )}

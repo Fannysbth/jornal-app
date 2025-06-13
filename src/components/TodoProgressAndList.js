@@ -3,6 +3,8 @@ import { supabase } from '../utils/supabaseClient'
 import { CheckCircle2, Circle, Edit, Trash2 } from 'lucide-react'
 import { FiPlus } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext';
+import { Plus } from 'lucide-react';
+
 
 export default function TodoProgressAndList() {
    const { user } = useAuth()
@@ -16,10 +18,12 @@ export default function TodoProgressAndList() {
   const [newDeadline, setNewDeadline] = useState('')
   
 
-  // Fetch todos dari Supabase saat mount
-  useEffect(() => {
+ useEffect(() => {
+  if (user) {
     fetchTodos()
-  }, [])
+  }
+}, [user])
+
 
   async function fetchTodos() {
     setLoading(true)
@@ -36,19 +40,20 @@ export default function TodoProgressAndList() {
     setLoading(false)
   }
 
-  // Toggle is_completed di Supabase & update state
+  
   async function toggleComplete(id, isCompleted) {
     const { error } = await supabase
       .from('todos')
       .update({ is_completed: !isCompleted })
       .eq('id', id)
     if (error) return alert('Failed to update task: ' + error.message)
+      await fetchTodos()
     setTodos(todos.map(todo =>
       todo.id === id ? { ...todo, is_completed: !isCompleted } : todo
     ))
   }
 
-  // Delete todo dari Supabase & update state
+ 
   async function deleteTodo(id) {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
     const { error } = await supabase
@@ -56,6 +61,7 @@ export default function TodoProgressAndList() {
       .delete()
       .eq('id', id)
     if (error) return alert('Failed to delete task: ' + error.message)
+      await fetchTodos()
     setTodos(todos.filter(todo => todo.id !== id))
   }
 
@@ -70,27 +76,37 @@ export default function TodoProgressAndList() {
     setTodos(todos.map(todo =>
       todo.id === id ? { ...todo, task: editText.trim(), deadline: editDeadline || null } : todo
     ))
+    await fetchTodos()
     setEditingId(null)
     setEditText('')
     setEditDeadline('')
   }
 
-  // Add task baru ke Supabase & update state
   async function addTask() {
     if (!newTask.trim()) return alert('Task cannot be empty')
     const { data, error } = await supabase
       .from('todos')
-      .insert([{ task: newTask.trim(), deadline: newDeadline || null, is_completed: false }])
+      .insert([{ task: newTask.trim(), deadline: newDeadline || null, is_completed: false, user_id: user.id }])
       .select()
       .single()
     if (error) return alert('Failed to add task: ' + error.message)
-    setTodos([data, ...todos])
+    await fetchTodos()
     setNewTask('')
     setNewDeadline('')
     setShowAddForm(false)
   }
+  function startEditing(todo) {
+  setEditingId(todo.id)
+  setEditText(todo.task)
+  setEditDeadline(todo.deadline || '')
+}
 
-  // Fungsi deadline status dan stats (sama seperti sebelumnya)
+function cancelEdit() {
+  setEditingId(null)
+  setEditText('')
+  setEditDeadline('')
+}
+
   const checkDeadlineStatus = (deadline) => {
     if (!deadline) return null
     const today = new Date()

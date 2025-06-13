@@ -133,8 +133,8 @@ export default function QuickNotes({ userId }) {
   }
 
   return (
-    <div className="card-glass">
-      <div className="flex justify-between items-center mb-4">
+    <div className="card-glass p-6 max-w-3xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-semibold text-gradient-primary">
           📝 Quick Notes
         </h3>
@@ -147,28 +147,25 @@ export default function QuickNotes({ userId }) {
         </button>
       </div>
 
-      {/* Add Note Form */}
       {showForm && (
-        <div className="mb-4 animate-fade-in">
-          <div className="flex gap-2">
+        <div className="mb-6 animate-fade-in space-y-3">
             <input
               type="text"
               value={newNote} 
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Quick note..."
-              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
               onKeyPress={(e) => e.key === 'Enter' && addNote()}
               maxLength={200}
             />
             <button
               onClick={addNote}
               disabled={loading || !newNote.trim()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors text-sm flex items-center gap-1"
+              className="px-4 py-2  btn-primary flex items-center"
             >
               <FiPlus size={14} />
-              Add
+               <span className="hidden sm:inline">Add</span>
             </button>
-          </div>
           <div className="text-xs text-gray-500 mt-1">
             {newNote.length}/200 characters
           </div>

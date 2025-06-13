@@ -36,7 +36,8 @@ export default function FavoritesPage() {
     searchTerm: '',
     moodFilter: ''
   })
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(true) // <-- state baru
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false) 
+
 
   const fetchJournals = useCallback(async (favoritesOnly) => {
     if (!user) return
@@ -106,10 +107,13 @@ export default function FavoritesPage() {
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }))
-    applyFilters(journals)
-  }, [applyFilters, journals])
+  }, [])
 
-  // Panggil fetchJournals tiap showFavoritesOnly atau sortBy berubah
+  useEffect(() => {
+  applyFilters(journals)
+}, [filters, journals, applyFilters])
+
+
   useEffect(() => {
     if (user) fetchJournals(showFavoritesOnly)
   }, [user, fetchJournals, showFavoritesOnly, sortBy])
@@ -122,25 +126,33 @@ export default function FavoritesPage() {
   const handleEdit = (journal) => {
     setCurrentJournal(journal)
     setIsModalOpen(true)
+    setMode('edit')
   }
 
   const toggleFavorite = async (journal) => {
-    try {
-      const { error } = await supabase
-        .from('journals')
-        .update({ is_favorite: !journal.is_favorite })
-        .eq('id', journal.id)
-      if (error) throw error
-      fetchJournals() 
-    } catch (error) {
-      console.error('Error updating favorite:', error)
-    }
+  try {
+    const updatedFavorite = !journal.is_favorite
+    const { error } = await supabase
+      .from('journals')
+      .update({ is_favorite: updatedFavorite })
+      .eq('id', journal.id)
+
+    if (error) throw error
+
+    const updatedJournals = journals.map(j =>
+      j.id === journal.id ? { ...j, is_favorite: updatedFavorite } : j
+    )
+    setJournals(updatedJournals)
+    applyFilters(updatedJournals)
+  } catch (error) {
+    console.error('Error updating favorite:', error)
   }
+}  
 
   const handleModalClose = () => {
     setIsModalOpen(false)
     setCurrentJournal(null)
-    fetchJournals()
+    fetchJournals(showFavoritesOnly)
   }
 
   const getTagColor = (index) => {
@@ -152,7 +164,7 @@ export default function FavoritesPage() {
       try {
         const { error } = await supabase.from('journals').delete().eq('id', id)
         if (error) throw error
-        fetchJournals()
+        fetchJournals(showFavoritesOnly)
       } catch (error) {
         alert(error.message)
       }
@@ -191,10 +203,6 @@ return (
             <FiStar className="text-yellow-500" />
             {showFavoritesOnly ? 'My Favorite Entries' : 'All Journal Entries'}
           </h1>
-          <p className="text-gray-600">
-            {filteredJournals.length} {showFavoritesOnly ? 'favorite' : 'journal'}{" "}
-            {filteredJournals.length === 1 ? 'entry' : 'entries'}
-          </p>
         </div>
 
         <div className="flex gap-3 items-center flex-wrap">
@@ -219,7 +227,7 @@ return (
           </select>
         </div>
 
-        <div className="flex gap-3">
+          <div className="flex gap-3">
           <button
             onClick={() => setIsModalOpen(true)}
             className="btn-primary hover-lift flex items-center gap-2"
@@ -234,6 +242,14 @@ return (
       <div className="mb-6">
         <div className="card-glass p-4">
           <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            Showing {filteredJournals.length} of {journals.length} entries
+          </div>
+        </div>
+
+        
+
             <div className="flex-1 min-w-[200px]">
               <div className="flex items-center gap-2 mb-2">
                 <FiFilter className="text-gray-400" />
@@ -247,7 +263,8 @@ return (
               </div>
             </div>
 
-            <div className="flex-1 min-w-[200px]">
+            <div className="flex justify-center items-center">
+              <div className="min-w-[200px]">
               <select
                 value={filters.moodFilter}
                 onChange={(e) => handleFilterChange({ moodFilter: e.target.value })}
@@ -256,16 +273,33 @@ return (
                 <option value="">All Moods</option>
                 {Object.entries(moodEmojis).map(([value, emoji]) => (
                   <option key={value} value={value}>
-                     {moodEmojis.emoji} {moodEmojis.label}
+                     {emoji.emoji} {emoji.label}
                   </option>
                 ))}
               </select>
+            </div>  
             </div>
+
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setView('grid')}
+              className={`p-2 rounded-md ${view === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'}`}
+              title="Grid View"
+            >
+            <FiGrid size={16} />
+            </button>
+            <button
+              onClick={() => setView('list')}
+              className={`p-2 rounded-md ${view === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'}`}
+              title="List View"
+            >
+            <FiList size={16} />
+            </button>
+          </div>
           </div>
         </div>
       </div>
 
-      {/* Journal list */}
       {loading ? (
         <LoadingSpinner />
       ) : filteredJournals.length === 0 ? (
@@ -373,7 +407,7 @@ function JournalCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor,
             <div className="flex flex-wrap gap-1">
               {journal.tags.map((tag, index) => (
                 <span
-                  key={tag.id}
+                  key={tag.id || tag.name || index}
                   className={`tag-blue ${getTagColor(index)} px-2 py-1 rounded-full text-xs`}
                 >
                   #{tag.name}
@@ -485,14 +519,16 @@ function JournalListCard({ journal, onEdit, onDelete, onToggleFavorite, getTagCo
 
       {journal.tags?.length > 0 && (
         <div className="flex flex-wrap gap-1 pt-3 border-t border-gray-100">
-          {journal.tags.map((tag, index) => (
-            <span
-              key={tag.id}
-              className={`tag-blue ${getTagColor(index)} px-2 py-1 rounded-full text-xs`}
-            >
-              #{tag.name}
-            </span>
-          ))}
+          {journal.tags.map((tagRaw, index) => {
+                const tag = typeof tagRaw === 'string' ? JSON.parse(tagRaw) : tagRaw;
+                return (
+                <span
+                  key={tag.id || tag.name || index}
+                  className={`tag-blue ${getTagColor(index)} px-2 py-1 rounded-full text-xs`}
+                >
+                  #{tag.name}
+                </span>
+              )})}
         </div>
       )}
     </div>

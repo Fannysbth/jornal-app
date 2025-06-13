@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useAuth } from '../context/AuthContext'
 import { FiHome, FiPlus, FiTag, FiLogOut, FiCheckCircle } from 'react-icons/fi'
 import Image from 'next/image'
+import { useState} from 'react'
 
 
 const emojis = ['🎉', '🚀', '✨', '🌈', '🔥', '💫', '🌟', '🍀', '🎈']
@@ -22,7 +23,6 @@ function FloatingEmoji({ emoji, style }) {
 export default function Layout({ children }) {
   const { user, signOut } = useAuth()
   const router = useRouter()
-
   const isActive = (pathname) => router.pathname === pathname
 
   return (
@@ -40,6 +40,7 @@ export default function Layout({ children }) {
               <Image src="/logo.png" alt="MyJournal Logo" width={40} height={40} className="rounded-full" />
               <span className="text-xl font-bold text-indigo-600 select-none cursor-default">MyJournal</span>
             </div>
+
             {user && (
               <div className="hidden sm:flex sm:space-x-8">
                 <Link href="/" passHref
