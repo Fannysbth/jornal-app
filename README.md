@@ -47,12 +47,6 @@ A modern, feature-rich digital journaling web application built with **Next.js**
 
 ---
 
-## 📸 Screenshots
-
-> _Coming Soon — Add screenshots or GIFs showing key features like journaling, mood tracker, dashboard, and export functionality._
-
----
-
 ## 🔧 Getting Started
 
 ### 1. Clone this repository
