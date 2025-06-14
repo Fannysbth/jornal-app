@@ -67,3 +67,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```bash
 npm run dev
 ```
+---
+### 🔐 Account Registration Notice
+
+After signing up, please make sure to **check your email inbox** to verify and activate your account.  
+Supabase requires email confirmation before you can log in and access the app.
+
+If you don't receive the email within a few minutes, please check your spam or junk folder.
+
