@@ -51,7 +51,7 @@ A modern, feature-rich digital journaling web application built with **Next.js**
 
 ### 1. Clone this repository
 ```bash
-git clone (https://github.com/Fannysbth/jornal-app)
+git clone https://github.com/Fannysbth/jornal-app.git
 ```
 ### 2. Install dependencies
 ```bash
