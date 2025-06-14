@@ -51,7 +51,6 @@ export default function SearchFilter({ onFilter, tags = [] }) {
 
   return (
     <div className="card-glass mb-6">
-  {/* Search Bar */}
   <div className="relative mb-6">
     <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
     <input
@@ -63,7 +62,6 @@ export default function SearchFilter({ onFilter, tags = [] }) {
     />
   </div>
 
-  {/* Filter Toggle & Clear */}
   <div className="flex justify-between items-center mb-6">
     <button
       onClick={() => setShowFilters(!showFilters)}
@@ -91,11 +89,8 @@ export default function SearchFilter({ onFilter, tags = [] }) {
     )}
   </div>
 
-  {/* Advanced Filters */}
   {showFilters && (
     <div className="space-y-6 pt-6 border-t border-gray-200 animate-fade-in">
-      
-      {/* Date Range */}
       <div>
         <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
           <FiCalendar size={16} />
@@ -123,7 +118,6 @@ export default function SearchFilter({ onFilter, tags = [] }) {
         </div>
       </div>
 
-      {/* Tags Filter */}
       {tags.length > 0 && (
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
@@ -148,7 +142,6 @@ export default function SearchFilter({ onFilter, tags = [] }) {
         </div>
       )}
 
-      {/* Mood Filter */}
       <div>
         <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
           😊 Mood
@@ -172,7 +165,6 @@ export default function SearchFilter({ onFilter, tags = [] }) {
         </div>
       </div>
 
-      {/* Favorites Toggle */}
       <div>
         <label className="flex items-center gap-3 cursor-pointer select-none">
           <input

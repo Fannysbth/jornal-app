@@ -53,7 +53,6 @@ export default function FavoritesPage() {
         query = query.eq('is_favorite', true)
       }
 
-      // Apply sorting
       switch (sortBy) {
         case 'oldest':
           query = query.order('created_at', { ascending: true })
@@ -118,7 +117,6 @@ export default function FavoritesPage() {
     if (user) fetchJournals(showFavoritesOnly)
   }, [user, fetchJournals, showFavoritesOnly, sortBy])
 
-  // UI toggle favorite/all
   const toggleShowFavorites = () => {
     setShowFavoritesOnly(prev => !prev)
   }
@@ -238,7 +236,6 @@ return (
         </div>
       </div>
 
-      {/* Filter bar */}
       <div className="mb-6">
         <div className="card-glass p-4">
           <div className="flex flex-wrap gap-4">

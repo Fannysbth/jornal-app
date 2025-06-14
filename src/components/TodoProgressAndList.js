@@ -16,14 +16,12 @@ export default function TodoProgressAndList() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTask, setNewTask] = useState('')
   const [newDeadline, setNewDeadline] = useState('')
-  
 
  useEffect(() => {
   if (user) {
     fetchTodos()
   }
 }, [user])
-
 
   async function fetchTodos() {
     setLoading(true)
@@ -52,7 +50,6 @@ export default function TodoProgressAndList() {
       todo.id === id ? { ...todo, is_completed: !isCompleted } : todo
     ))
   }
-
  
   async function deleteTodo(id) {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
@@ -64,7 +61,6 @@ export default function TodoProgressAndList() {
       await fetchTodos()
     setTodos(todos.filter(todo => todo.id !== id))
   }
-
 
   async function saveEdit(id) {
     if (!editText.trim()) return alert('Task cannot be empty')
@@ -95,17 +91,18 @@ export default function TodoProgressAndList() {
     setNewDeadline('')
     setShowAddForm(false)
   }
-  function startEditing(todo) {
-  setEditingId(todo.id)
-  setEditText(todo.task)
-  setEditDeadline(todo.deadline || '')
-}
 
-function cancelEdit() {
-  setEditingId(null)
-  setEditText('')
-  setEditDeadline('')
-}
+  function startEditing(todo) {
+    setEditingId(todo.id)
+    setEditText(todo.task)
+    setEditDeadline(todo.deadline || '')
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditText('')
+    setEditDeadline('')
+  }
 
   const checkDeadlineStatus = (deadline) => {
     if (!deadline) return null

@@ -38,7 +38,6 @@ export default function ExportButton() {
 
   const moodOptions = ['happy', 'sad', 'excited', 'calm', 'angry', 'grateful', 'anxious', 'motivated']
 
-  // Fetch available tags when modal opens
   const handleOpen = async () => {
     setIsOpen(true)
     try {
@@ -59,7 +58,7 @@ export default function ExportButton() {
 
   const getDateRange = () => {
     const now = new Date()
-    let startDate = new Date(0) // Beginning of time
+    let startDate = new Date(0) 
     let endDate = now
 
     switch (exportOptions.dateRange) {
@@ -92,7 +91,6 @@ export default function ExportButton() {
       .lte('created_at', endDate.toISOString())
       .order('created_at', { ascending: false })
 
-    // Apply mood filter
     if (exportOptions.moodFilter) {
       query = query.eq('mood', exportOptions.moodFilter)
     }
@@ -101,7 +99,6 @@ export default function ExportButton() {
 
     if (error) throw error
 
-    // Apply tag filter
     let filteredData = data || []
     if (exportOptions.selectedTags.length > 0) {
       filteredData = filteredData.filter(entry =>
@@ -232,8 +229,7 @@ export default function ExportButton() {
   }
 
   const generatePDF = async (data) => {
-    // This would require a PDF library like jsPDF
-    // For now, we'll return a simple HTML that can be printed to PDF
+
     let html = `
       <!DOCTYPE html>
       <html>
@@ -323,7 +319,6 @@ export default function ExportButton() {
           break
       }
 
-      // Create and download file
       const blob = new Blob([content], { type: mimeType })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -371,7 +366,6 @@ export default function ExportButton() {
         </div>
 
         <div className="space-y-6">
-          {/* Format Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Export Format
@@ -400,7 +394,6 @@ export default function ExportButton() {
             </div>
           </div>
 
-          {/* Date Range */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               <FiCalendar className="inline mr-1" />
@@ -442,14 +435,12 @@ export default function ExportButton() {
             )}
           </div>
 
-          {/* Filters */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               <FiFilter className="inline mr-1" />
               Content Filters
             </label>
 
-            {/* Mood Filter */}
             {moodOptions.length > 0 && (
               <div className="mb-3">
                 <label className="block text-xs text-gray-500 mb-1">Mood Filter</label>
@@ -468,7 +459,6 @@ export default function ExportButton() {
               </div>
             )}
 
-            {/* Tag Filter */}
             {availableTags.length > 0 && (
               <div className="mb-3">
                 <label className="block text-xs text-gray-500 mb-1">Tag Filter</label>
@@ -501,7 +491,6 @@ export default function ExportButton() {
             )}
           </div>
 
-          {/* Include Options */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Include in Export
@@ -537,7 +526,6 @@ export default function ExportButton() {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <button
               onClick={() => setIsOpen(false)}

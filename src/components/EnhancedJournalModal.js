@@ -46,7 +46,7 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
     const words = content.trim().split(/\s+/).filter(word => word.length > 0)
     const count = words.length
     setWordCount(count)
-    setReadingTime(Math.ceil(count / 200)) // asumsi baca 200 kata per menit
+    setReadingTime(Math.ceil(count / 200)) 
   }, [content])
 
   const fetchTagSuggestions = async () => {
@@ -131,7 +131,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
       let journalId = journal?.id
 
       if (journal) {
-        // Update existing journal
         const { error } = await supabase
           .from('journals')
           .update(journalData)
@@ -139,7 +138,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
 
         if (error) throw error
       } else {
-        // Create new journal
         const { data, error } = await supabase
           .from('journals')
           .insert([journalData])
@@ -150,11 +148,9 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
         if (data) journalId = data.id
       }
 
-      // Handle tags association
       if (tags.length > 0) {
         if (!journalId) throw new Error('journalId is undefined!')
 
-        // Remove old journal_tags
         const { error: delError } = await supabase
           .from('journal_tags')
           .delete()
@@ -162,10 +158,8 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
 
         if (delError) throw delError
 
-        // For each tag, ensure tag exists, then link
         for (const tagObj of tags) {
           const tagName = tagObj.name
-          // Check if tag exists
           const { data: existingTags, error: tagError } = await supabase
             .from('tags')
             .select('id')
@@ -195,7 +189,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
             tagId = existingTags[0].id
           }
 
-          // Insert journal_tag link
           const { error: journalTagError } = await supabase
             .from('journal_tags')
             .insert([{ journal_id: journalId, tag_id: tagId }])
@@ -203,7 +196,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
           if (journalTagError) throw journalTagError
         }
       } else {
-        // If no tags, ensure old tags are removed
         if (journalId) {
           await supabase
             .from('journal_tags')
@@ -264,7 +256,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
         readOnly={mode === "view"}
       />
 
-      {/* Mood selection */}
       <div className="mb-4 flex flex-wrap gap-2 items-center">
         <span className="mr-2 font-medium text-gray-700">Mood:</span>
         {moods.map(m => (
@@ -284,7 +275,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
         ))}
       </div>
 
-      {/* Favorite toggle */}
       <div className="mb-4 flex items-center gap-2">
         <input
           type="checkbox"
@@ -299,7 +289,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
         </label>
       </div>
 
-      {/* Tags input */}
       <div className="mb-4 relative">
         <label htmlFor="tags" className="block font-medium mb-1 text-gray-700">
           Tags (max 10):
@@ -339,7 +328,6 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
       )}
       </div>
 
-      {/* Tags display */}
         <div className="mb-4 flex flex-wrap gap-2">
           {tags.map(tag => (
             <div
@@ -360,12 +348,10 @@ export default function EnhancedJournalModal({ isOpen, onClose, userId, journal 
           ))}
         </div>
 
-      {/* Word count & reading time */}
       <div className="mb-4 text-gray-600 text-sm">
         Word count: {wordCount} | Estimated reading time: {readingTime} min
       </div>
 
-      {/* Submit button hanya tampil kalau mode bukan view */}
       {mode !== "view" && (
         <button
           type="submit"

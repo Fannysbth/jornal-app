@@ -42,8 +42,6 @@ export default function JournalHome() {
   const [todos, setTodos] = useState([])
   const [sortBy, setSortBy] = useState('newest')
   const [mode, setMode] = useState('create') 
-  
-
 
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -63,7 +61,6 @@ export default function JournalHome() {
         .select('*')
         .eq('user_id', user.id)
 
-      // Apply sorting
       switch (sortBy) {
         case 'oldest':
           query = query.order('created_at', { ascending: true })
@@ -108,7 +105,6 @@ export default function JournalHome() {
     setAllTags(Array.from(tags))
   }
 
-  // Apply filters
   const applyFilters = useCallback(() => {
     let filtered = [...journals]
 
@@ -151,10 +147,10 @@ export default function JournalHome() {
   }, [journals, filters])
 
   const openDetailModal = (journal) => {
-  setCurrentJournal(journal)
-  setMode('view')
-  setIsModalOpen(true)
-};
+    setCurrentJournal(journal)
+    setMode('view')
+    setIsModalOpen(true)
+  };
  
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }))
@@ -166,7 +162,6 @@ export default function JournalHome() {
     return { totalWords, favoriteCount }
   }, [journals])
 
-  // Effects
   useEffect(() => {
     if (user) fetchJournals()
   }, [user, fetchJournals])
@@ -211,12 +206,6 @@ export default function JournalHome() {
     fetchJournals()
   }
 
-  // Helper functions
-  const formatReadingTime = (minutes) => {
-    if (!minutes || minutes <= 0) return ''
-    return `${minutes} min read`
-  }
-
   const getTagColor = (index) => {
     return tagColors[index % tagColors.length]
   }
@@ -227,7 +216,6 @@ export default function JournalHome() {
         <div className="text-center py-16 px-4 max-w-md mx-auto">
           <div className="mb-8">
             <Image src="/logo.png" alt="MyJournal Logo" width={200} height={200} className="rounded-full mx-auto mb-4" />
-            {/* <FiHeart className="mx-auto text-6xl text-pink-500 mb-4" /> */}
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-6">
             Welcome to MyJournal
@@ -254,7 +242,6 @@ export default function JournalHome() {
     )
   }
 
-  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -499,88 +486,3 @@ function JournalCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor,
     </div>
   );
 }
-
-
-
-function JournalListCard({ journal, onEdit, onDelete, onToggleFavorite, getTagColor, onView, readOnly = false }) {
-  return (
-    <div className="card-glass hover-lift p-6">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-lg font-semibold text-gradient-primary">
-              {journal.title}
-            </h2>
-            {journal.mood && (
-              <span className="text-xl" title={journal.mood}>
-                <span>{moodEmojis[journal.mood]?.emoji}</span>
-              </span>
-            )}
-          </div>
-          <div className="flex items-center text-xs text-gray-500 gap-3 mb-2">
-            <span>{new Date(journal.created_at).toLocaleDateString()}</span>
-            {journal.word_count > 0 && (
-              <span className="flex items-center gap-1">
-                <FiEdit size={12} />
-                {journal.word_count.toLocaleString()} words
-              </span>
-            )}
-          </div>
-        </div>
-
-        {!readOnly && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => onToggleFavorite(journal)}
-              className={`p-1 rounded-full ${journal.is_favorite ? 'text-pink-500' : 'text-gray-400'}`}
-              aria-label={journal.is_favorite ? 'Unfavorite' : 'Favorite'}
-            >
-              <FiHeart size={16} className={journal.is_favorite ? 'fill-current' : ''} />
-            </button>
-            <button
-              onClick={() => onView(journal)}
-              className="btn-neutral hover-scale p-1 text-gray-500"
-              aria-label="View entry"
-            >
-              <FiEye size={16} />
-            </button>
-            <button
-              onClick={() => onEdit(journal)}
-              className="btn-secondary hover-scale p-1 text-gray-500"
-              aria-label="Edit entry"
-            >
-              <FiEdit size={16} />
-            </button>
-            <button
-              onClick={() => onDelete(journal.id)}
-              className="btn-accent hover-glow p-1 text-gray-500"
-              aria-label="Delete entry"
-            >
-              <FiTrash2 size={16} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="prose max-w-none mb-3">
-        <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line line-clamp-2">
-          {journal.content}
-        </p>
-      </div>
-
-      {journal.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-1 pt-3 border-t border-gray-100">
-          {journal.tags.map((tag, index) => (
-            <span
-              key={tag.id|| index}
-              className={`tag-blue ${getTagColor(index)} px-2 py-1 rounded-full text-xs`}
-            >
-              #{tag.name}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-

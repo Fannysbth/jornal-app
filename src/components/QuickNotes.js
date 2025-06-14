@@ -172,7 +172,6 @@ export default function QuickNotes({ userId }) {
         </div>
       )}
 
-      {/* Notes List */}
       <div className="space-y-2 max-h-64 overflow-y-auto">
         {notes.length === 0 ? (
           <div className="text-gray-500 text-sm text-center py-8">

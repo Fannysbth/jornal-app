@@ -30,8 +30,7 @@ export default function MoodTracker({ userId }) {
   const fetchMoodData = async () => {
     try {
       setLoading(true)
-      
-      // Calculate date range
+ 
       const now = new Date()
       let startDate = new Date()
       
@@ -70,13 +69,11 @@ export default function MoodTracker({ userId }) {
   const calculateMoodStats = (data) => {
     const stats = {}
     const total = data.length
-    
-    // Count each mood
+
     data.forEach(entry => {
       stats[entry.mood] = (stats[entry.mood] || 0) + 1
     })
-    
-    // Convert to percentages
+
     Object.keys(stats).forEach(mood => {
       stats[mood] = {
         count: stats[mood],
@@ -90,7 +87,6 @@ export default function MoodTracker({ userId }) {
   const getMoodTrend = () => {
     if (moodData.length < 2) return null
     
-    // Simple trend calculation based on recent vs older entries
     const recent = moodData.slice(0, Math.ceil(moodData.length / 2))
     const older = moodData.slice(Math.ceil(moodData.length / 2))
     
@@ -159,7 +155,6 @@ export default function MoodTracker({ userId }) {
         </div>
       ) : (
         <>
-          {/* Mood Overview */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">{moodData.length}</div>
@@ -174,7 +169,6 @@ export default function MoodTracker({ userId }) {
             )}
           </div>
 
-          {/* Mood Trend */}
           {trend && (
             <div className={`p-4 rounded-lg mb-6 flex items-center ${
               trend === 'improving' ? 'bg-green-50 text-green-700' :
@@ -195,7 +189,6 @@ export default function MoodTracker({ userId }) {
             </div>
           )}
 
-          {/* Mood Distribution */}
           <div className="space-y-3">
             <h4 className="font-medium text-gray-700 mb-3">Mood Distribution</h4>
             {Object.entries(moodStats)
@@ -225,7 +218,6 @@ export default function MoodTracker({ userId }) {
               ))}
           </div>
 
-          {/* Recent Moods Timeline */}
           <div className="mt-6 pt-6 border-t border-gray-100">
             <h4 className="font-medium text-gray-700 mb-3">Recent Moods</h4>
             <div className="flex flex-wrap gap-2">

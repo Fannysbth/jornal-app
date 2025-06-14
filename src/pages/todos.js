@@ -4,12 +4,8 @@ import {
   Search, MoreVertical, AlertCircle, CheckCircle2, Circle,
   Target, Zap, Flag, Archive, RotateCcw
 } from 'lucide-react';
-
 import { supabase } from '../utils/supabaseClient'
 import { useAuth } from '../context/AuthContext';
-
-
-
 
 export default function AdvancedTodos() {
   const { user } = useAuth()
@@ -27,69 +23,72 @@ export default function AdvancedTodos() {
   const [sortBy, setSortBy] = useState('created_at');
 
   useEffect(() => {
-  if (user) {
-    fetchTodos();
-  }
-}, [user]);
+    if (user) {
+      fetchTodos();
+    }
+  }, [user]);
 
-const fetchTodos = async () => {
-  setLoading(true);
-  const { data, error } = await supabase
-    .from('todos')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+  const fetchTodos = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('todos')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching todos:', error.message);
-  } else {
-    setTodos(data);
-  }
-  setLoading(false);
-};
-const addTodo = async () => {
- if (!newTask.trim()) return alert('Task cannot be empty')
-     const { data, error } = await supabase
-       .from('todos')
-       .insert([{ task: newTask.trim(), deadline: newDeadline || null, is_completed: false, user_id: user.id  } ])
-       .select()
-       .single()
-     if (error) return alert('Failed to add task: ' + error.message)
-     setTodos([data, ...todos])
-     setNewTask('')
-     setNewDeadline('')
-     setShowAddForm(false)
-};
+    if (error) {
+      console.error('Error fetching todos:', error.message);
+    } else {
+      setTodos(data);
+    }
+    
+    setLoading(false);
+  };
 
+  const addTodo = async () => {
+    if (!newTask.trim()) return alert('Task cannot be empty')
+    
+    const { data, error } = await supabase
+      .from('todos')
+      .insert([{ task: newTask.trim(), deadline: newDeadline || null, is_completed: false, user_id: user.id  } ])
+      .select()
+      .single()
+     
+    if (error) return alert('Failed to add task: ' + error.message)
+    
+    setTodos([data, ...todos])
+    setNewTask('')
+    setNewDeadline('')
+    setShowAddForm(false)
+  };
 
   const toggleComplete = async (id, isCompleted) => {
-  const { error } = await supabase
-    .from('todos')
-    .update({ is_completed: !isCompleted })
-    .eq('id', id);
+    const { error } = await supabase
+      .from('todos')
+      .update({ is_completed: !isCompleted })
+      .eq('id', id);
 
-  if (error) {
-    console.error('Error toggling complete:', error.message);
-  } else {
-    fetchTodos();
-  }
-};
-
+    if (error) {
+      console.error('Error toggling complete:', error.message);
+    } else {
+      fetchTodos();
+    }
+  };
 
   const deleteTodo = async (id) => {
-  if (!window.confirm('Are you sure you want to delete this task?')) return;
+    if (!window.confirm('Are you sure you want to delete this task?')) return;
 
-  const { error } = await supabase
-    .from('todos')
-    .delete()
-    .eq('id', id);
+    const { error } = await supabase
+      .from('todos')
+      .delete()
+      .eq('id', id);
 
-  if (error) {
-    console.error('Error deleting todo:', error.message);
-  } else {
-    setTodos(todos.filter(todo => todo.id !== id))
-  }
-};
+    if (error) {
+      console.error('Error deleting todo:', error.message);
+    } else {
+      setTodos(todos.filter(todo => todo.id !== id))
+    }
+  };
 
 
   const startEditing = (todo) => {
@@ -111,7 +110,7 @@ const addTodo = async () => {
       setEditingId(null)
       setEditText('')
       setEditDeadline('')
-    }
+  }
 
 
   const cancelEdit = () => {
@@ -172,8 +171,7 @@ const addTodo = async () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 ">
-        
-        {/* Header Section */}
+
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="text-center lg:text-left">
@@ -182,8 +180,7 @@ const addTodo = async () => {
               </h1>
               <p className="text-gray-600 text-lg">Stay organized and productive every day</p>
             </div>
-            
-            {/* Statistics Cards */}
+ 
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {[
                 { label: 'Total', value: stats.total, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -201,7 +198,6 @@ const addTodo = async () => {
           </div>
         </div>
 
-        {/* Add New Task Section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
           <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-800">
             <div className="p-2 bg-blue-100 rounded-lg mr-3">
@@ -245,7 +241,6 @@ const addTodo = async () => {
           </div>
         </div>
 
-        {/* Filters and Search Section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 justify-center text-center">
             <div className="relative">
@@ -293,7 +288,6 @@ const addTodo = async () => {
           </div>
         </div>
 
-        {/* Tasks List */}
         <div className="space-y-4">
           {loading ? (
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center">
@@ -320,7 +314,6 @@ const addTodo = async () => {
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    {/* Checkbox */}
                     <button
                       onClick={() => toggleComplete(todo.id, todo.is_completed)}
                       className="flex-shrink-0 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 mt-1"
@@ -332,7 +325,6 @@ const addTodo = async () => {
                       )}
                     </button>
 
-                    {/* Task Content */}
                     <div className="flex-1 min-w-0">
                       {editingId === todo.id ? (
                         <div className="space-y-4">
@@ -379,7 +371,6 @@ const addTodo = async () => {
                       )}
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex-shrink-0 flex gap-2">
                       {editingId === todo.id ? (
                         <>

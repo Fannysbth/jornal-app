@@ -23,7 +23,6 @@ export default function JournalStreaks({ userId }) {
     try {
       setLoading(true)
 
-      // Ambil semua entry user dari tabel journals
       const { data, error } = await supabase
         .from('journals')
         .select('created_at')
@@ -34,14 +33,12 @@ export default function JournalStreaks({ userId }) {
 
       const entries = data || []
 
-      // Ambil tanggal unik tanpa jam
       const uniqueDates = [
         ...new Set(
           entries.map((entry) => new Date(entry.created_at).toDateString())
         ),
       ].sort((a, b) => new Date(b) - new Date(a))
 
-      // Hitung current streak
       let currentStreak = 0
       const today = new Date()
       let checkDate = new Date(today)
@@ -65,7 +62,6 @@ export default function JournalStreaks({ userId }) {
         checkDate.setDate(checkDate.getDate() - 1)
       }
 
-      // Hitung longest streak
       let longestStreak = 0
       let tempStreak = 0
       let prevDate = null
@@ -77,7 +73,7 @@ export default function JournalStreaks({ userId }) {
           tempStreak = 1
         } else {
           const dayDiff =
-            (currentDate - prevDate) / (1000 * 60 * 60 * 24) // Selisih hari
+            (currentDate - prevDate) / (1000 * 60 * 60 * 24) 
           if (dayDiff === 1) {
             tempStreak++
           } else {
@@ -89,7 +85,6 @@ export default function JournalStreaks({ userId }) {
       }
       longestStreak = Math.max(longestStreak, tempStreak)
 
-      // Hitung jumlah entry minggu ini
       const startOfWeek = new Date(today)
       startOfWeek.setDate(today.getDate() - today.getDay())
       startOfWeek.setHours(0, 0, 0, 0)
@@ -103,7 +98,6 @@ export default function JournalStreaks({ userId }) {
         )
       ).size
 
-      // Buat data 30 hari terakhir untuk calendar
       const recent30Days = []
       for (let i = 29; i >= 0; i--) {
         const date = new Date(today)
@@ -133,7 +127,6 @@ export default function JournalStreaks({ userId }) {
     }
   }
 
-  // Emoji untuk streak
   const getStreakEmoji = (streak) => {
     if (streak === 0) return '📝'
     if (streak < 3) return '🔥'
@@ -143,7 +136,6 @@ export default function JournalStreaks({ userId }) {
     return '🏆'
   }
 
-  // Pesan motivasi berdasarkan streak
   const getMotivationalMessage = () => {
     const { currentStreak, longestStreak } = streakData
 
@@ -253,7 +245,6 @@ return (
           </div>
         ))}
 
-        {/* Empty slots before the first day */}
         {Array.from({ length: recentDays[0]?.dayOfWeek || 0 }, (_, i) => (
           <div key={`empty-${i}`} className="w-4 h-4"></div>
         ))}
